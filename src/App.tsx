@@ -20,6 +20,7 @@ const Memorization = lazy(() => import('./pages/Memorization').then((m) => ({ de
 const Revision = lazy(() => import('./pages/Revision').then((m) => ({ default: m.Revision })));
 const Focus = lazy(() => import('./pages/Focus').then((m) => ({ default: m.Focus })));
 const Mistakes = lazy(() => import('./pages/Mistakes').then((m) => ({ default: m.Mistakes })));
+const Mutashabihat = lazy(() => import('./pages/Mutashabihat').then((m) => ({ default: m.Mutashabihat })));
 const Analytics = lazy(() => import('./pages/Analytics').then((m) => ({ default: m.Analytics })));
 const Planner = lazy(() => import('./pages/Planner').then((m) => ({ default: m.Planner })));
 const BackupPage = lazy(() => import('./pages/BackupPage').then((m) => ({ default: m.BackupPage })));
@@ -172,6 +173,7 @@ export default function App() {
             {page === 'revision' && <Revision />}
             {page === 'focus' && <Focus />}
             {page === 'mistakes' && <Mistakes />}
+            {page === 'mutashabihat' && <Mutashabihat />}
             {page === 'analytics' && <Analytics />}
             {page === 'planner' && <Planner />}
             {page === 'backup' && <BackupPage />}

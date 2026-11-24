@@ -13,7 +13,7 @@ import { useOnline } from '../lib/pwa';
 
 export type PageId =
   | 'dashboard' | 'reader' | 'memorization' | 'revision' | 'focus'
-  | 'mistakes' | 'analytics' | 'planner' | 'backup' | 'howto';
+  | 'mistakes' | 'mutashabihat' | 'analytics' | 'planner' | 'backup' | 'howto';
 
 export const NAV: Array<{ id: PageId; label: string; icon: IconName; group: string }> = [
   { id: 'dashboard', label: 'لوحة التحكم', icon: 'home', group: 'اليوم' },
@@ -22,6 +22,7 @@ export const NAV: Array<{ id: PageId; label: string; icon: IconName; group: stri
   { id: 'reader', label: 'المصحف', icon: 'book', group: 'الدراسة' },
   { id: 'memorization', label: 'الحفظ', icon: 'layers', group: 'الدراسة' },
   { id: 'mistakes', label: 'الأخطاء', icon: 'pen', group: 'الدراسة' },
+  { id: 'mutashabihat', label: 'المتشابهات', icon: 'copy', group: 'الدراسة' },
   { id: 'focus', label: 'التركيز', icon: 'timer', group: 'الدراسة' },
   { id: 'analytics', label: 'الإحصائيات', icon: 'chart', group: 'التقدّم' },
   { id: 'backup', label: 'النسخ الاحتياطي', icon: 'database', group: 'بياناتك' },

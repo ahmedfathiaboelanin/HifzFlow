@@ -10,7 +10,7 @@ export type IconName =
   | 'flame' | 'target' | 'plus' | 'trash' | 'refresh' | 'alert' | 'check-circle'
   | 'clock' | 'palette' | 'search' | 'play' | 'pause' | 'square' | 'star'
   | 'shield' | 'arrow-up-right' | 'menu' | 'leaf' | 'list' | 'devices' | 'share'
-  | 'eye' | 'bell';
+  | 'eye' | 'bell' | 'copy';
 
 const paths: Record<IconName, ReactNode> = {
   home: <><path d="M3.5 10.6 12 3.5l8.5 7.1" /><path d="M5.5 9.5v10h13v-10" /><path d="M9.5 19.5v-5.5h5v5.5" /></>,
@@ -61,6 +61,7 @@ const paths: Record<IconName, ReactNode> = {
   share: <><path d="M12 15V4" /><path d="m8 8 4-4 4 4" /><path d="M5 13v6.5h14V13" /></>,
   eye: <><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
   bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>,
+  copy: <><rect x="8.5" y="8.5" width="11" height="11" rx="2" /><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" /></>,
 };
 
 export function Icon({

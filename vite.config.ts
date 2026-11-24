@@ -58,6 +58,7 @@ export default defineConfig({
         shortcuts: [
           { name: 'مراجعة اليوم', short_name: 'المراجعة', url: '/#revision', icons: [icon(192)] },
           { name: 'المصحف', short_name: 'المصحف', url: '/#reader', icons: [icon(192)] },
+          { name: 'ضبط المتشابهات', short_name: 'المتشابهات', url: '/#mutashabihat', icons: [icon(192)] },
           { name: 'تسجيل محفوظ', short_name: 'الحفظ', url: '/#memorization', icons: [icon(192)] },
           { name: 'جلسة تركيز', short_name: 'التركيز', url: '/#focus', icons: [icon(192)] },
         ],
