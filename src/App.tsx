@@ -8,6 +8,7 @@ import { generateRecurringToday, hydrate } from './store/store';
 import { resolveMode } from './lib/themes';
 import { syncThemeColor, updateAppBadge } from './lib/pwa';
 import { loadQuranData } from './lib/quran';
+import { revisionDueCount } from './lib/review';
 import { todayStr } from './lib/utils';
 import { Layout, NAV } from './components/Layout';
 import type { PageId } from './components/Layout';
@@ -56,15 +57,19 @@ export default function App() {
   const updateSW = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
   const prefs = useAppSelector((s) => s.prefs);
   const today = todayStr();
-  const todayTasks = useAppSelector((s) => s.tasks.daily.filter((t) => t.date <= today && !t.done).length);
-  const dueReviews = useAppSelector((s) => s.progress.entries.filter((e) => e.srDue && e.srDue <= today).length);
+  const openTasks = useAppSelector((s) =>
+    s.tasks.daily.filter((t) => t.date <= today && !t.done && t.kind !== 'fixation').length,
+  );
+  const revisionDue = useAppSelector((s) =>
+    revisionDueCount(s.progress.entries, s.tasks.daily, s.prefs, s.wird.items, today),
+  );
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (ready) {
-      updateAppBadge(todayTasks + dueReviews);
+      updateAppBadge(openTasks + revisionDue);
     }
-  }, [ready, todayTasks, dueReviews]);
+  }, [ready, openTasks, revisionDue]);
 
   useEffect(() => {
     let live = true;

@@ -4,10 +4,12 @@ import { useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/store';
 import { insertFixationPlan, rateProgress } from '../store/store';
 import { prefsSlice, tasksSlice, wirdSlice } from '../store/slices';
-import { INTERVALS, buildKhatma, buildWirdTable, rateEntry, revisionPriority, splitWirdByMinutes } from '../lib/fixation';
+import { INTERVALS, MIN_PER_PAGE, buildKhatma, buildWirdTable, rateEntry, revisionPriority, splitWirdByMinutes } from '../lib/fixation';
 import type { KhatmaPlan } from '../lib/fixation';
+import { levelLabel, todayFixationItems, todayWirdInfo } from '../lib/review';
+import type { TodayFixationItem } from '../lib/review';
 import { surahName } from '../lib/quran';
-import { addDaysStr, fmtDateAr, fmtMinutes, fmtNum, todayStr } from '../lib/utils';
+import { addDaysStr, cx, fmtDateAr, fmtMinutes, fmtNum, todayStr } from '../lib/utils';
 import { hapticSuccess, hapticTap } from '../lib/pwa';
 import type { ProgressEntry, Rating } from '../lib/types';
 import { STRENGTH_LABEL } from '../lib/types';
@@ -24,7 +26,7 @@ export function Revision() {
       <PageHeader
         icon="repeat"
         title="المراجعة"
-        sub="التكرار المتباعد للأضعف أولاً، والتثبيت بختمات، وورد المراجعة الدوري."
+        sub="مراجعة اليوم = التثبيت + الورد اليومي + التكرار المتباعد للأضعف أولاً."
       />
       <Tabs
         tabs={[
@@ -37,7 +39,7 @@ export function Revision() {
         value={tab}
         onChange={setTab}
       />
-      {tab === 'today' && <TodayTab />}
+      {tab === 'today' && <TodayTab onOpenTab={setTab} />}
       {tab === 'fixation' && <FixationTab />}
       {tab === 'wird' && <WirdTab />}
       {tab === 'splitter' && <SplitterTab />}
@@ -97,10 +99,13 @@ function RoundSection({
 }
 
 // ---- Today's revision ---------------------------------------------------------
-function TodayTab() {
+function TodayTab({ onOpenTab }: { onOpenTab: (tab: Tab) => void }) {
   const entries = useAppSelector((s) => s.progress.entries);
   const mistakes = useAppSelector((s) => s.mistakes.items);
+  const tasks = useAppSelector((s) => s.tasks.daily);
+  const completions = useAppSelector((s) => s.wird.items);
   const prefs = useAppSelector((s) => s.prefs);
+  const dispatch = useAppDispatch();
   const [notice, setNotice] = useState('');
   const today = todayStr();
 
@@ -116,6 +121,46 @@ function TodayTab() {
       r3: scored.filter((x) => x.e.srDue! > today),
     };
   }, [entries, mistakes, today]);
+
+  const fixation = useMemo(
+    () => todayFixationItems(entries, tasks, prefs.rates, today),
+    [entries, tasks, prefs.rates, today],
+  );
+  const wird = useMemo(
+    () => todayWirdInfo(entries, prefs, completions, today),
+    [entries, prefs, completions, today],
+  );
+  const fixDone = fixation.filter((i) => i.done).length;
+  const spacedDue = rounds.r1.length + rounds.r2.length;
+
+  const toggleFixation = (item: TodayFixationItem) => {
+    if (item.synthetic) {
+      dispatch(tasksSlice.actions.addDaily({
+        id: item.id,
+        date: item.date,
+        title: item.title,
+        done: true,
+        priority: item.level === 'weak' ? 3 : 2,
+        linkedSurah: item.surah,
+        kind: 'fixation',
+        refId: item.chunkId,
+      }));
+    } else {
+      dispatch(tasksSlice.actions.toggleDaily(item.id));
+    }
+    if (item.done) hapticTap();
+    else hapticSuccess();
+  };
+
+  const toggleWird = () => {
+    if (!wird) return;
+    if (wird.notStarted) {
+      dispatch(prefsSlice.actions.setPrefs({ wirdCycleStart: wird.cycleStart }));
+    }
+    dispatch(wirdSlice.actions.toggleWirdDay({ cycleStart: wird.cycleStart, day: wird.day.day }));
+    if (wird.completed) hapticTap();
+    else hapticSuccess();
+  };
 
   const rate = (e: ProgressEntry, rating: Rating) => {
     const preview = rateEntry(e, rating, prefs.fixationReviewCycle);
@@ -140,6 +185,135 @@ function TodayTab() {
       {notice && (
         <div className="mt-3 rounded-xl border border-primary/40 bg-primarysoft/70 p-3 text-sm font-semibold">{notice}</div>
       )}
+
+      <Card className="mt-3">
+        <CardHead title="مراجعة اليوم" sub="مجموع التثبيت + الورد اليومي + التكرار المتباعد" />
+        <CardBody className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-xl border border-line bg-surface2/60 p-3">
+            <p className="text-[11px] font-bold text-muted">التثبيت</p>
+            <p className="mt-1 font-display text-xl font-bold">
+              {fmtNum(fixDone)} <span className="text-sm font-normal text-muted">/ {fmtNum(fixation.length)}</span>
+            </p>
+            <div className="mt-2"><ProgressBar value={fixDone} max={Math.max(1, fixation.length)} /></div>
+            <p className="mt-1.5 text-[11px] text-muted">مقاطع اليوم</p>
+          </div>
+          <div className="rounded-xl border border-line bg-surface2/60 p-3">
+            <p className="text-[11px] font-bold text-muted">الورد اليومي</p>
+            <p className="mt-1 font-display text-xl font-bold">{wird ? `${fmtNum(wird.day.pages)} صفحة` : '—'}</p>
+            <p className={cx('mt-1.5 text-[11px]', wird?.completed ? 'font-semibold text-primary' : 'text-muted')}>
+              {wird ? (wird.completed ? 'تم ✓' : 'لم يتم بعد') : 'أضف محفوظك'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-line bg-surface2/60 p-3">
+            <p className="text-[11px] font-bold text-muted">المراجعة المتباعدة</p>
+            <p className="mt-1 font-display text-xl font-bold">
+              {fmtNum(spacedDue)} <span className="text-sm font-normal text-muted">مستحق</span>
+            </p>
+            <p className="mt-1.5 text-[11px] text-muted">
+              {rounds.r3.length > 0 ? `+${fmtNum(rounds.r3.length)} خلال يومين` : 'لا مستحق قادم'}
+            </p>
+          </div>
+        </CardBody>
+      </Card>
+
+      <Card className="mt-3">
+        <CardHead
+          title="التثبيت — اليوم"
+          sub={fixation.length > 0 ? `${fmtNum(fixDone)} من ${fmtNum(fixation.length)} مقطعاً — من خطة الختمة` : 'لا توجد مقاطع تثبيت مستحقة اليوم'}
+          action={<Btn variant="ghost" size="sm" onClick={() => onOpenTab('fixation')}>خطة التثبيت</Btn>}
+        />
+        <CardBody>
+          {entries.length === 0 ? (
+            <p className="text-sm text-muted">أضف محفوظك من صفحة الحفظ لتُبنى خطة التثبيت.</p>
+          ) : fixation.length === 0 ? (
+            <p className="flex items-center gap-2 text-sm text-muted">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> لا تثبيت مستحق اليوم — أحسنت.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {fixation.map((item) => (
+                <li
+                  key={item.id}
+                  className={cx(
+                    'flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2 transition',
+                    item.done ? 'border-primary/30 bg-primarysoft/40' : 'border-line bg-surface2/50',
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={item.done}
+                    onChange={() => toggleFixation(item)}
+                    aria-label={`تم ${item.label}`}
+                    className="h-4 w-4 shrink-0 accent-[rgb(var(--c-primary))]"
+                  />
+                  <Badge tone={item.level === 'weak' ? 'warn' : item.level === 'medium' ? 'soft' : 'ok'}>
+                    {levelLabel(item.level)}
+                  </Badge>
+                  <span className={cx('min-w-0 flex-1 text-sm font-semibold', item.done && 'line-through opacity-70')}>
+                    {item.label}
+                  </span>
+                  {item.overdue && <Badge tone="danger">متأخر</Badge>}
+                  {item.pageCount !== null && (
+                    <span className="text-xs text-muted">{fmtNum(item.pageCount)} صفحات</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
+
+      <Card className="mt-3">
+        <CardHead
+          title="الورد اليومي"
+          sub={wird
+            ? `يوم ${fmtNum(wird.day.day)} من ${fmtNum(wird.cycleLength)} — الدورة تبدأ ${fmtDateAr(wird.cycleStart)}`
+            : 'لا يوجد محفوظ لبناء ورد المراجعة'}
+          action={<Btn variant="ghost" size="sm" onClick={() => onOpenTab('wird')}>جدول الورد</Btn>}
+        />
+        <CardBody>
+          {!wird ? (
+            <p className="text-sm text-muted">أضف محفوظك من صفحة الحفظ ليُبنى ورد المراجعة اليومي.</p>
+          ) : (
+            <>
+              <label
+                className={cx(
+                  'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition',
+                  wird.completed ? 'border-primary/30 bg-primarysoft/40' : 'border-line bg-surface2/50 hover:border-primary/30',
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={wird.completed}
+                  onChange={toggleWird}
+                  aria-label="تم ورد اليوم"
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[rgb(var(--c-primary))]"
+                />
+                <span className="min-w-0">
+                  <span className={cx('block text-sm font-bold', wird.completed && 'line-through opacity-70')}>
+                    {surahName(wird.day.fromSurah)} {fmtNum(wird.day.fromAyah)} ← {surahName(wird.day.toSurah)} {fmtNum(wird.day.toAyah)}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted">
+                    {fmtNum(wird.day.ayahs)} آية • {fmtNum(wird.day.pages)} صفحات • نحو {fmtMinutes(wird.day.pages * MIN_PER_PAGE)}
+                  </span>
+                </span>
+              </label>
+              {wird.completed ? (
+                <p className="mt-2 text-xs font-semibold text-primary">✓ تم ورد اليوم — بارك الله فيك.</p>
+              ) : wird.notStarted ? (
+                <p className="mt-2 text-xs text-muted">لم تبدأ دورة الورد بعد — ستُبدأ تلقائياً عند أول علامة.</p>
+              ) : (
+                <p className="mt-2 text-xs text-muted">علّم الورد بعد إتمامه ليُحتسب في إنجاز اليوم.</p>
+              )}
+            </>
+          )}
+        </CardBody>
+      </Card>
+
+      <div className="mt-5">
+        <h2 className="text-lg font-bold">المراجعة المتباعدة</h2>
+        <p className="mb-2 text-sm text-muted">الجولات المستحقة والقادمة — الأضعف أولاً.</p>
+      </div>
       <RoundSection title="الجولة الأولى — المتأخر" sub="مستحق قبل اليوم، الأضعف أولاً" items={rounds.r1} onRate={rate} />
       <RoundSection title="الجولة الثانية — مستحق اليوم" sub="مراجعة اليوم" items={rounds.r2} onRate={rate} />
       <RoundSection title="الجولة الثالثة — القادم" sub="مستحق خلال اليومين القادمين" items={rounds.r3} onRate={rate} />

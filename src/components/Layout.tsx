@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { PALETTES } from '../lib/themes';
 import { useAppDispatch, useAppSelector } from '../store/store';
 import { prefsSlice } from '../store/slices';
+import { revisionDueCount } from '../lib/review';
 import { cx, todayStr } from '../lib/utils';
 import { Icon } from './icons';
 import type { IconName } from './icons';
@@ -135,7 +136,9 @@ export function Layout({ page, onNavigate, children }: { page: PageId; onNavigat
   const [moreOpen, setMoreOpen] = useState(false);
   const today = todayStr();
   const todayTasks = useAppSelector((s) => s.tasks.daily.filter((t) => t.date <= today && !t.done).length);
-  const dueReviews = useAppSelector((s) => s.progress.entries.filter((e) => e.srDue && e.srDue <= today).length);
+  const revisionDue = useAppSelector((s) =>
+    revisionDueCount(s.progress.entries, s.tasks.daily, s.prefs, s.wird.items, today),
+  );
   const online = useOnline();
   const current = NAV.find((n) => n.id === page) ?? NAV[0];
 
@@ -164,7 +167,7 @@ export function Layout({ page, onNavigate, children }: { page: PageId; onNavigat
 
   const badgeFor = (id: PageId) => {
     if (id === 'planner') return todayTasks;
-    if (id === 'revision') return dueReviews;
+    if (id === 'revision') return revisionDue;
     return 0;
   };
 
