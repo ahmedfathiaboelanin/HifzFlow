@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icon.svg" color="#2a7055" />
+    <meta name="theme-color" content="#f5f7f2" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="HifzFlow — تطبيق محلي أولاً لحفظ القرآن ومراجعته بالتثبيت والتكرار المتباعد. يعمل دون إنترنت، وبياناتك على جهازك." />
+    <meta name="application-name" content="HifzFlow" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="HifzFlow" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>HifzFlow — حفظ القرآن</title>
+    <style>
+      html { background: #f5f7f2; }
+      @media (prefers-color-scheme: dark) { html { background: #0d1310; } }
+      #boot {
+        position: fixed; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 14px;
+        font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; color: #2a6f53;
+      }
+      #boot img { width: 64px; height: 64px; border-radius: 18px; }
+      #boot span { font-size: 13px; opacity: 0.65; }
+      @media (prefers-color-scheme: dark) { #boot { color: #6ebe96; } }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="boot" aria-live="polite">
+        <img src="/icon.svg" alt="" />
+        <span>جارٍ فتح HifzFlow…</span>
+      </div>
+    </div>
+    <noscript>يحتاج HifzFlow إلى تفعيل JavaScript في المتصفح.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

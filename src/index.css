@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Theme system: 5 palettes x light/dark (CSS vars, RGB triplets) ---------- */
+:root {
+  color-scheme: light;
+}
+[data-mode='dark'] {
+  color-scheme: dark;
+}
+
+/* sage — المريمية (default green) */
+[data-palette='sage'] {
+  --c-primary: 42 111 83; --c-primary-soft: 226 239 231; --c-accent: 173 133 55;
+  --c-bg: 245 247 242; --c-surface: 255 255 255; --c-surface2: 238 242 236;
+  --c-text: 26 36 30; --c-muted: 96 111 100; --c-border: 216 224 214;
+  --c-hero1: 50 122 92; --c-hero2: 33 88 66; --c-hero3: 20 56 42;
+}
+[data-palette='sage'][data-mode='dark'] {
+  --c-primary: 110 190 150; --c-primary-soft: 26 50 39; --c-accent: 214 178 98;
+  --c-bg: 13 19 16; --c-surface: 21 29 24; --c-surface2: 28 39 32;
+  --c-text: 232 238 233; --c-muted: 156 172 160; --c-border: 50 64 54;
+  --c-hero1: 42 103 78; --c-hero2: 31 77 58; --c-hero3: 18 49 37;
+}
+
+/* ocean — المحيط */
+[data-palette='ocean'] {
+  --c-primary: 14 109 136; --c-primary-soft: 223 241 246; --c-accent: 178 126 48;
+  --c-bg: 240 247 249; --c-surface: 255 255 255; --c-surface2: 231 242 246;
+  --c-text: 22 36 42; --c-muted: 91 114 126; --c-border: 209 226 232;
+  --c-hero1: 14 109 136; --c-hero2: 11 86 108; --c-hero3: 7 58 74;
+}
+[data-palette='ocean'][data-mode='dark'] {
+  --c-primary: 88 197 240; --c-primary-soft: 20 48 60; --c-accent: 214 178 98;
+  --c-bg: 9 20 26; --c-surface: 15 30 38; --c-surface2: 22 42 52;
+  --c-text: 230 240 244; --c-muted: 150 176 188; --c-border: 44 70 84;
+  --c-hero1: 12 88 110; --c-hero2: 10 70 88; --c-hero3: 6 46 60;
+}
+
+/* desert — الصحراء */
+[data-palette='desert'] {
+  --c-primary: 137 90 30; --c-primary-soft: 246 237 219; --c-accent: 120 84 40;
+  --c-bg: 250 246 238; --c-surface: 255 255 255; --c-surface2: 243 236 224;
+  --c-text: 43 35 24; --c-muted: 117 103 82; --c-border: 228 216 196;
+  --c-hero1: 137 90 30; --c-hero2: 111 71 22; --c-hero3: 79 50 16;
+}
+[data-palette='desert'][data-mode='dark'] {
+  --c-primary: 232 186 105; --c-primary-soft: 52 40 24; --c-accent: 214 178 98;
+  --c-bg: 22 18 12; --c-surface: 31 26 17; --c-surface2: 42 35 22;
+  --c-text: 240 234 222; --c-muted: 180 168 146; --c-border: 70 57 36;
+  --c-hero1: 111 71 22; --c-hero2: 88 56 18; --c-hero3: 60 38 12;
+}
+
+/* rose — الورد */
+[data-palette='rose'] {
+  --c-primary: 174 32 86; --c-primary-soft: 250 231 240; --c-accent: 173 133 55;
+  --c-bg: 252 244 247; --c-surface: 255 255 255; --c-surface2: 247 234 240;
+  --c-text: 43 28 35; --c-muted: 121 96 107; --c-border: 232 210 222;
+  --c-hero1: 174 32 86; --c-hero2: 143 24 70; --c-hero3: 103 15 50;
+}
+[data-palette='rose'][data-mode='dark'] {
+  --c-primary: 246 126 190; --c-primary-soft: 54 26 42; --c-accent: 214 178 98;
+  --c-bg: 23 14 19; --c-surface: 33 20 28; --c-surface2: 45 27 38;
+  --c-text: 242 230 236; --c-muted: 188 162 176; --c-border: 78 50 65;
+  --c-hero1: 143 24 70; --c-hero2: 116 18 56; --c-hero3: 81 12 39;
+}
+
+/* night — الليل */
+[data-palette='night'] {
+  --c-primary: 84 88 219; --c-primary-soft: 232 233 252; --c-accent: 173 133 55;
+  --c-bg: 245 245 250; --c-surface: 255 255 255; --c-surface2: 236 236 244;
+  --c-text: 27 27 43; --c-muted: 101 101 127; --c-border: 216 216 230;
+  --c-hero1: 84 88 219; --c-hero2: 68 71 184; --c-hero3: 47 50 132;
+}
+[data-palette='night'][data-mode='dark'] {
+  --c-primary: 170 184 253; --c-primary-soft: 32 35 66; --c-accent: 214 178 98;
+  --c-bg: 11 12 22; --c-surface: 18 20 35; --c-surface2: 26 29 48;
+  --c-text: 234 234 244; --c-muted: 164 166 196; --c-border: 52 55 84;
+  --c-hero1: 68 71 184; --c-hero2: 55 58 150; --c-hero3: 39 41 108;
+}
+
+/* ---------- Base ---------- */
+html, body, #root { min-height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  @apply bg-appbg text-ink font-sans;
+  margin: 0;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+#root { position: relative; z-index: 1; }
+
+/* Quiet geometric lattice — the app's one repeated background texture. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1100px 520px at 78% -8%, rgb(var(--c-primary) / 0.10), transparent 62%),
+    repeating-linear-gradient(45deg, rgb(var(--c-primary) / 0.045) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(-45deg, rgb(var(--c-primary) / 0.045) 0 1px, transparent 1px 42px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 88%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 88%);
+}
+
+::selection { background: rgb(var(--c-primary) / 0.24); }
+
+:focus-visible {
+  outline: 2px solid rgb(var(--c-primary) / 0.72);
+  outline-offset: 2px;
+}
+
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--c-primary) / 0.38) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgb(var(--c-primary) / 0.34); border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+@layer components {
+  /* Page title: Amiri for the calm manuscript voice, tight baseline. */
+  .page-title {
+    @apply font-display text-[1.85rem] font-bold leading-[1.25] tracking-tight sm:text-[2.05rem];
+  }
+  .page-sub {
+    @apply mt-1 max-w-[68ch] text-sm leading-relaxed text-muted;
+  }
+  .eyebrow {
+    @apply text-[11px] font-semibold text-muted;
+  }
+  .surface-card {
+    @apply rounded-3xl border border-line bg-surface shadow-soft;
+  }
+  .hero-card {
+    @apply relative overflow-hidden rounded-3xl bg-gradient-to-bl from-hero1 via-hero2 to-hero3 text-white shadow-lift;
+  }
+  .hero-pattern::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.13' stroke-width='1'%3E%3Cpath d='M64 8l13 30 30 13-30 13-13 30-13-30-30-13 30-13z'/%3E%3Ccircle cx='64' cy='64' r='48'/%3E%3Cpath d='M8 64h112M64 8v112'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 128px 128px;
+    opacity: 0.75;
+    -webkit-mask-image: linear-gradient(105deg, transparent 35%, #000 100%);
+    mask-image: linear-gradient(105deg, transparent 35%, #000 100%);
+  }
+  .nav-item {
+    @apply relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink transition-colors;
+  }
+  .nav-item:hover { @apply bg-surface2; }
+  .nav-item[aria-current='page'] {
+    @apply bg-primarysoft text-primary;
+  }
+  .nav-item[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: -1px;
+    top: 9px;
+    bottom: 9px;
+    width: 3px;
+    border-radius: 999px;
+    background: rgb(var(--c-accent));
+  }
+  .stat-value {
+    @apply font-display text-2xl font-bold leading-none tracking-tight sm:text-[1.7rem];
+  }
+  .field-label {
+    @apply mb-1 block text-xs font-semibold text-muted;
+  }
+  .data-table { @apply w-full text-sm; }
+  .data-table thead tr { @apply border-b border-line; }
+  .data-table th { @apply px-3 py-2.5 text-start text-[11px] font-semibold text-muted; }
+  .data-table tbody tr { @apply border-b border-line transition-colors last:border-0; }
+  .data-table tbody tr:hover { @apply bg-surface2/60; }
+  .data-table td { @apply px-3 py-2.5; }
+}
+
+.quran-text {
+  font-family: Amiri, serif;
+  line-height: 2.15;
+}
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type='date'] { color-scheme: light; }
+[data-mode='dark'] input[type='date'] { color-scheme: dark; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="HifzFlow">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b8c69"/>
+      <stop offset="0.55" stop-color="#2a7055"/>
+      <stop offset="1" stop-color="#194a39"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.4">
+    <path d="M256 56l23 54 54 23-54 23-23 54-23-54-54-23 54-23z"/>
+    <circle cx="256" cy="256" r="210"/>
+    <path d="M46 256h420M256 46v420"/>
+  </g>
+  <g transform="translate(76.8 76.8) scale(0.7)">
+    <path d="M256 130c-34 26-78 38-124 35 7 92 18 166 30 226 35-19 67-27 94-27s59 8 94 27c12-60 23-134 30-226-46 3-90-9-124-35z"
+          fill="none" stroke="#ffffff" stroke-width="26" stroke-linejoin="round"/>
+    <path d="M256 168v218" stroke="#ffffff" stroke-width="26" stroke-linecap="round"/>
+    <path d="M192 268c20-7 39-7 55 2M265 270c16-9 35-9 55-2" fill="none" stroke="#e2c079" stroke-width="18" stroke-linecap="round"/>
+    <path d="M256 104l7 15 16 7-16 7-7 15-7-15-16-7 16-7z" fill="#e2c079"/>
+  </g>
+</svg>

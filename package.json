@@ -1,0 +1,42 @@
+{
+  "name": "hifzflow-react",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "fetch-quran": "node scripts/fetch-quran.mjs",
+    "simulate": "tsx scripts/simulate.ts"
+  },
+  "dependencies": {
+    "@fontsource/amiri": "^5.3.0",
+    "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+    "@hookform/resolvers": "^7.0.8",
+    "@reduxjs/toolkit": "^2.15.0",
+    "dexie": "^4.4.7",
+    "framer-motion": "^14.14.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-hook-form": "^7.92.0",
+    "react-redux": "^9.3.1",
+    "recharts": "^3.11.0",
+    "vite-plugin-pwa": "^2.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "autoprefixer": "^10.7.0",
+    "oxlint": "^1.90.0",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.15",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.6"
+  }
+}
