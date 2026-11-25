@@ -166,3 +166,64 @@ export const MISTAKE_LABEL: Record<Mistake['type'], string> = {
 };
 
 export const STRENGTH_ORDER: Strength[] = ['weak', 'medium', 'strong', 'veryStrong'];
+
+// ---- Schedule Planner (جدولة الحفظ والمراجعة) ---------------------------------
+export type MemorizedScopeType = 'ajza' | 'surahs' | 'pages';
+
+export interface MemorizedScope {
+  type: MemorizedScopeType;
+  ajzaCount: number; // e.g. 10
+  ajzaStart: 'start' | 'end' | 'custom';
+  customFromJuz?: number;
+  customToJuz?: number;
+  fromSurah: number;
+  toSurah: number;
+  fromPage: number;
+  toPage: number;
+}
+
+export type MissedDaysPolicy = 'delayEnd' | 'recalculateDaily';
+
+export interface ScheduleDayItem {
+  id: string;
+  dayIndex: number;
+  date: string; // yyyy-mm-dd
+  title: string;
+  details: string;
+  startPage: number;
+  endPage: number;
+  pageCount: number;
+  done: boolean;
+  doneAt: string | null;
+}
+
+export interface ScheduleConfig {
+  id: string; // 'current'
+  memorized: MemorizedScope;
+  targetDays: number;
+  startDate: string; // yyyy-mm-dd
+  missedDaysPolicy: MissedDaysPolicy;
+  updatedAt: string;
+}
+
+export type WeakPartType = 'surah' | 'juz' | 'rub' | 'custom';
+export type WeakPartStage = 'sight' | 'memory'; // نظراً أولاً، ثم غيباً
+export type WeakRating = 'hard' | 'ok' | 'easy'; // صعب / مقبول / سهل
+
+export interface WeakPartItem {
+  id: string;
+  title: string;
+  type: WeakPartType;
+  surahNumber?: number;
+  juzNumber?: number;
+  rubName?: string;
+  stage: WeakPartStage;
+  intervalDays: number;
+  repetitionCount: number;
+  lastReviewedAt: string | null;
+  lastRating: WeakRating | null;
+  nextReviewDate: string; // yyyy-mm-dd
+  notes?: string;
+  createdAt: string;
+}
+

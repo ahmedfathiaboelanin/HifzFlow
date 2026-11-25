@@ -27,13 +27,17 @@ export const BackupSchema = z.object({
     recurringTasks: tableSchema,
     userPreferences: tableSchema,
     wirdCompletions: tableSchema,
+    scheduleConfig: tableSchema,
+    scheduleDays: tableSchema,
+    weakParts: tableSchema,
   }).partial(),
 });
 
 export type BackupTableName =
   | 'memorizationProgress' | 'revisionPlans' | 'revisionTasks' | 'revisionSessions'
   | 'revisionHistory' | 'mistakes' | 'bookmarks' | 'focusSessions' | 'distractions'
-  | 'dailyTasks' | 'recurringTasks' | 'userPreferences' | 'wirdCompletions';
+  | 'dailyTasks' | 'recurringTasks' | 'userPreferences' | 'wirdCompletions'
+  | 'scheduleConfig' | 'scheduleDays' | 'weakParts';
 
 export interface BackupFile {
   app: 'HifzFlow';
@@ -61,6 +65,9 @@ export function buildBackup(state: AppState): BackupFile {
       recurringTasks: state.tasks.recurring,
       userPreferences: [state.prefs],
       wirdCompletions: state.wird.items,
+      scheduleConfig: state.schedule?.config ? [state.schedule.config] : [],
+      scheduleDays: state.schedule?.days ?? [],
+      weakParts: state.schedule?.weakParts ?? [],
     },
   };
 }

@@ -5,8 +5,14 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import type {
   Bookmark, DailyTask, Distraction, FixRates, FocusSession, Mistake,
   Preferences, ProgressEntry, RecurringTask, RevisionHistoryItem,
-  RevisionPlan, RevisionSessionItem, RevisionTask, WirdCompletion,
+  RevisionPlan, RevisionSessionItem, RevisionTask, ScheduleConfig,
+  ScheduleDayItem, WeakPartItem, WeakRating, WirdCompletion,
 } from '../lib/types';
+import {
+  applyDelayEndPolicy, applyRecalculateDailyPolicy,
+  calculateNextRepetition, defaultScheduleConfig,
+} from '../lib/schedule';
+import { addDaysStr, todayStr } from '../lib/utils';
 
 export const defaultPrefs: Preferences = {
   key: 'settings',
@@ -189,6 +195,88 @@ export const wirdSlice = createSlice({
       const i = state.items.findIndex((x) => x.cycleStart === cycleStart && x.day === day);
       if (i >= 0) state.items.splice(i, 1);
       else state.items.push({ id: `${cycleStart}-${day}`, cycleStart, day, doneAt: new Date().toISOString() });
+    },
+  },
+});
+
+// ---- Schedule Planner (جدولة الحفظ والمراجعة) ---------------------------------
+export const scheduleSlice = createSlice({
+  name: 'schedule',
+  initialState: {
+    config: defaultScheduleConfig,
+    days: [] as ScheduleDayItem[],
+    weakParts: [] as WeakPartItem[],
+  },
+  reducers: {
+    setScheduleAll: (
+      state,
+      action: PayloadAction<{
+        config?: ScheduleConfig;
+        days?: ScheduleDayItem[];
+        weakParts?: WeakPartItem[];
+      }>,
+    ) => {
+      if (action.payload.config) state.config = action.payload.config;
+      if (action.payload.days) state.days = action.payload.days;
+      if (action.payload.weakParts) state.weakParts = action.payload.weakParts;
+    },
+    updateConfig: (state, action: PayloadAction<Partial<ScheduleConfig>>) => {
+      state.config = { ...state.config, ...action.payload, updatedAt: new Date().toISOString() };
+    },
+    setDays: (state, action: PayloadAction<ScheduleDayItem[]>) => {
+      state.days = action.payload;
+    },
+    toggleDayDone: (state, action: PayloadAction<string>) => {
+      const d = state.days.find((x) => x.id === action.payload);
+      if (d) {
+        d.done = !d.done;
+        d.doneAt = d.done ? new Date().toISOString() : null;
+      }
+    },
+    setDayDone: (state, action: PayloadAction<{ id: string; done: boolean }>) => {
+      const d = state.days.find((x) => x.id === action.payload.id);
+      if (d) {
+        d.done = action.payload.done;
+        d.doneAt = action.payload.done ? new Date().toISOString() : null;
+      }
+    },
+    addWeakPart: (state, action: PayloadAction<WeakPartItem>) => {
+      state.weakParts.unshift(action.payload);
+    },
+    updateWeakPart: (state, action: PayloadAction<{ id: string; patch: Partial<WeakPartItem> }>) => {
+      const wp = state.weakParts.find((x) => x.id === action.payload.id);
+      if (wp) Object.assign(wp, action.payload.patch);
+    },
+    removeWeakPart: (state, action: PayloadAction<string>) => {
+      state.weakParts = state.weakParts.filter((x) => x.id !== action.payload);
+    },
+    rateWeakPart: (state, action: PayloadAction<{ id: string; rating: WeakRating }>) => {
+      const wp = state.weakParts.find((x) => x.id === action.payload.id);
+      if (!wp) return;
+      const today = todayStr();
+      const { nextInterval } = calculateNextRepetition(wp.intervalDays, action.payload.rating);
+      wp.intervalDays = nextInterval;
+      wp.repetitionCount += 1;
+      wp.lastReviewedAt = new Date().toISOString();
+      wp.lastRating = action.payload.rating;
+      wp.nextReviewDate = addDaysStr(today, nextInterval);
+    },
+    toggleWeakPartStage: (state, action: PayloadAction<string>) => {
+      const wp = state.weakParts.find((x) => x.id === action.payload);
+      if (wp) {
+        wp.stage = wp.stage === 'sight' ? 'memory' : 'sight';
+      }
+    },
+    applyMissedDaysDelay: (state) => {
+      state.days = applyDelayEndPolicy(state.days, todayStr());
+    },
+    applyMissedDaysRecalculate: (state, action: PayloadAction<{ targetEndDate: string }>) => {
+      state.days = applyRecalculateDailyPolicy(state.days, action.payload.targetEndDate, todayStr());
+    },
+    resetSchedule: (state) => {
+      state.config = defaultScheduleConfig;
+      state.days = [];
+      state.weakParts = [];
     },
   },
 });

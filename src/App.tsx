@@ -26,6 +26,7 @@ const Analytics = lazy(() => import('./pages/Analytics').then((m) => ({ default:
 const Planner = lazy(() => import('./pages/Planner').then((m) => ({ default: m.Planner })));
 const BackupPage = lazy(() => import('./pages/BackupPage').then((m) => ({ default: m.BackupPage })));
 const HowTo = lazy(() => import('./pages/HowTo').then((m) => ({ default: m.HowTo })));
+const SchedulePlanner = lazy(() => import('./pages/SchedulePlanner').then((m) => ({ default: m.SchedulePlanner })));
 
 const VALID_PAGES = new Set<string>(NAV.map((n) => n.id));
 
@@ -181,6 +182,7 @@ export default function App() {
             {page === 'mutashabihat' && <Mutashabihat />}
             {page === 'analytics' && <Analytics />}
             {page === 'planner' && <Planner />}
+            {page === 'schedule' && <SchedulePlanner />}
             {page === 'backup' && <BackupPage />}
             {page === 'howto' && <HowTo />}
           </Suspense>

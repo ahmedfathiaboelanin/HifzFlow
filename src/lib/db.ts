@@ -7,7 +7,8 @@ import type { Table } from 'dexie';
 import type {
   Bookmark, DailyTask, Distraction, FocusSession, Mistake, Preferences,
   ProgressEntry, RecurringTask, RevisionHistoryItem, RevisionPlan,
-  RevisionSessionItem, RevisionTask, WirdCompletion,
+  RevisionSessionItem, RevisionTask, ScheduleConfig, ScheduleDayItem,
+  WeakPartItem, WirdCompletion,
 } from './types';
 
 export class HifzFlowDB extends Dexie {
@@ -24,6 +25,9 @@ export class HifzFlowDB extends Dexie {
   recurringTasks!: Table<RecurringTask, string>;
   userPreferences!: Table<Preferences, string>;
   wirdCompletions!: Table<WirdCompletion, string>;
+  scheduleConfig!: Table<ScheduleConfig, string>;
+  scheduleDays!: Table<ScheduleDayItem, string>;
+  weakParts!: Table<WeakPartItem, string>;
 
   constructor() {
     super('HifzFlowDB');
@@ -41,6 +45,11 @@ export class HifzFlowDB extends Dexie {
       recurringTasks: 'id, active',
       userPreferences: 'key',
       wirdCompletions: 'id, cycleStart, day',
+    });
+    this.version(2).stores({
+      scheduleConfig: 'id',
+      scheduleDays: 'id, date, done',
+      weakParts: 'id, nextReviewDate',
     });
   }
 }
@@ -92,6 +101,9 @@ export const repos = {
   dailyTasks: () => dexieRepo(db.dailyTasks),
   recurringTasks: () => dexieRepo(db.recurringTasks),
   wirdCompletions: () => dexieRepo(db.wirdCompletions),
+  scheduleConfig: () => dexieRepo(db.scheduleConfig),
+  scheduleDays: () => dexieRepo(db.scheduleDays),
+  weakParts: () => dexieRepo(db.weakParts),
 };
 
 // ---- Sync provider (MVP: no cloud sync) --------------------------------------

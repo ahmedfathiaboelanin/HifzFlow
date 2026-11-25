@@ -16,8 +16,9 @@ import type { Rating } from '../lib/types';
 import { todayStr, uid } from '../lib/utils';
 import {
   defaultPrefs, focusSlice, metaSlice, mistakesSlice, prefsSlice,
-  progressSlice, revisionSlice, tasksSlice, wirdSlice,
+  progressSlice, revisionSlice, scheduleSlice, tasksSlice, wirdSlice,
 } from './slices';
+import { defaultScheduleConfig, generateScheduleDays } from '../lib/schedule';
 
 const rootReducer = {
   prefs: prefsSlice.reducer,
@@ -27,6 +28,7 @@ const rootReducer = {
   mistakes: mistakesSlice.reducer,
   focus: focusSlice.reducer,
   wird: wirdSlice.reducer,
+  schedule: scheduleSlice.reducer,
   meta: metaSlice.reducer,
 };
 
@@ -41,7 +43,8 @@ async function persistAll(state: Omit<AppState, 'meta'>): Promise<void> {
       'rw',
       [db.memorizationProgress, db.revisionPlans, db.revisionTasks, db.revisionSessions,
        db.revisionHistory, db.mistakes, db.bookmarks, db.focusSessions, db.distractions,
-       db.dailyTasks, db.recurringTasks, db.userPreferences, db.wirdCompletions],
+       db.dailyTasks, db.recurringTasks, db.userPreferences, db.wirdCompletions,
+       db.scheduleConfig, db.scheduleDays, db.weakParts],
       async () => {
         await db.memorizationProgress.clear();
         await db.memorizationProgress.bulkPut(state.progress.entries);
@@ -69,6 +72,12 @@ async function persistAll(state: Omit<AppState, 'meta'>): Promise<void> {
         await db.userPreferences.put(state.prefs);
         await db.wirdCompletions.clear();
         await db.wirdCompletions.bulkPut(state.wird.items);
+        await db.scheduleConfig.clear();
+        if (state.schedule?.config) await db.scheduleConfig.put(state.schedule.config);
+        await db.scheduleDays.clear();
+        if (state.schedule?.days?.length) await db.scheduleDays.bulkPut(state.schedule.days);
+        await db.weakParts.clear();
+        if (state.schedule?.weakParts?.length) await db.weakParts.bulkPut(state.schedule.weakParts);
       },
     );
   } catch {
@@ -116,6 +125,13 @@ export async function hydrate(): Promise<void> {
     appStore.dispatch(metaSlice.actions.setHydrated());
     return;
   }
+  const schedConfigs = await db.scheduleConfig.toArray();
+  const loadedConfig = schedConfigs[0] ?? defaultScheduleConfig;
+  let loadedDays = await db.scheduleDays.toArray();
+  if (loadedDays.length === 0) {
+    loadedDays = generateScheduleDays(loadedConfig.memorized, loadedConfig.targetDays, todayStr());
+  }
+
   const state = {
     prefs: prefsRows[0],
     progress: { entries: await db.memorizationProgress.toArray() },
@@ -138,6 +154,11 @@ export async function hydrate(): Promise<void> {
       distractions: await db.distractions.toArray(),
     },
     wird: { items: await db.wirdCompletions.toArray() },
+    schedule: {
+      config: loadedConfig,
+      days: loadedDays,
+      weakParts: await db.weakParts.toArray(),
+    },
   };
   loadStateIntoStore(state);
   appStore.dispatch(metaSlice.actions.setHydrated());
@@ -145,6 +166,8 @@ export async function hydrate(): Promise<void> {
 
 function emptyStateWithSample() {
   const sample = buildSampleState();
+  const config = defaultScheduleConfig;
+  const days = generateScheduleDays(config.memorized, config.targetDays, todayStr());
   return {
     prefs: { ...defaultPrefs, sampleLoaded: true },
     progress: { entries: sample.progress?.entries ?? [] },
@@ -153,6 +176,7 @@ function emptyStateWithSample() {
     mistakes: { items: sample.mistakes?.items ?? [], bookmarks: sample.mistakes?.bookmarks ?? [] },
     focus: { sessions: [], distractions: [] },
     wird: { items: [] },
+    schedule: { config, days, weakParts: [] },
   };
 }
 
@@ -164,6 +188,7 @@ function loadStateIntoStore(s: {
   mistakes: AppState['mistakes'];
   focus: AppState['focus'];
   wird: AppState['wird'];
+  schedule: AppState['schedule'];
 }): void {
   appStore.dispatch(prefsSlice.actions.setPrefs(s.prefs));
   appStore.dispatch(progressSlice.actions.setEntries(s.progress.entries));
@@ -172,6 +197,7 @@ function loadStateIntoStore(s: {
   appStore.dispatch(mistakesSlice.actions.setMistakesAll(s.mistakes));
   appStore.dispatch(focusSlice.actions.setFocusAll(s.focus));
   appStore.dispatch(wirdSlice.actions.setWirdAll(s.wird.items));
+  appStore.dispatch(scheduleSlice.actions.setScheduleAll(s.schedule));
 }
 
 // ---- Thunks / operations -------------------------------------------------------
@@ -269,6 +295,11 @@ export function importBackupData(backup: BackupFile): void {
       distractions: (t.distractions ?? []) as AppState['focus']['distractions'],
     },
     wird: { items: (t.wirdCompletions ?? []) as AppState['wird']['items'] },
+    schedule: {
+      config: ((t.scheduleConfig?.[0] as unknown as AppState['schedule']['config']) ?? defaultScheduleConfig),
+      days: ((t.scheduleDays ?? []) as AppState['schedule']['days']),
+      weakParts: ((t.weakParts ?? []) as AppState['schedule']['weakParts']),
+    },
   });
   // Persist immediately (middleware debounce also covers it).
   void persistAll(appStore.getState() as AppState);
@@ -299,5 +330,6 @@ export async function clearAllData(): Promise<void> {
   appStore.dispatch(mistakesSlice.actions.setMistakesAll({ items: [], bookmarks: [] }));
   appStore.dispatch(focusSlice.actions.setFocusAll({ sessions: [], distractions: [] }));
   appStore.dispatch(wirdSlice.actions.setWirdAll([]));
+  appStore.dispatch(scheduleSlice.actions.resetSchedule());
   await persistAll(appStore.getState() as AppState);
 }

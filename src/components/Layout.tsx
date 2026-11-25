@@ -14,11 +14,13 @@ import { useOnline } from '../lib/pwa';
 
 export type PageId =
   | 'dashboard' | 'reader' | 'memorization' | 'revision' | 'focus'
-  | 'mistakes' | 'mutashabihat' | 'analytics' | 'planner' | 'backup' | 'howto';
+  | 'mistakes' | 'mutashabihat' | 'analytics' | 'planner' | 'backup' | 'howto'
+  | 'schedule';
 
 export const NAV: Array<{ id: PageId; label: string; icon: IconName; group: string }> = [
   { id: 'dashboard', label: 'لوحة التحكم', icon: 'home', group: 'اليوم' },
   { id: 'revision', label: 'المراجعة', icon: 'repeat', group: 'اليوم' },
+  { id: 'schedule', label: 'جدولة الحفظ والمراجعة', icon: 'target', group: 'اليوم' },
   { id: 'planner', label: 'المهام', icon: 'calendar', group: 'اليوم' },
   { id: 'reader', label: 'المصحف', icon: 'book', group: 'الدراسة' },
   { id: 'memorization', label: 'الحفظ', icon: 'layers', group: 'الدراسة' },
@@ -139,6 +141,11 @@ export function Layout({ page, onNavigate, children }: { page: PageId; onNavigat
   const revisionDue = useAppSelector((s) =>
     revisionDueCount(s.progress.entries, s.tasks.daily, s.prefs, s.wird.items, today),
   );
+  const scheduleDue = useAppSelector((s) => {
+    const weakDue = s.schedule?.weakParts?.filter((wp) => wp.nextReviewDate <= today).length ?? 0;
+    const khatmaPending = s.schedule?.days?.find((d) => d.date === today && !d.done) ? 1 : 0;
+    return weakDue + khatmaPending;
+  });
   const online = useOnline();
   const current = NAV.find((n) => n.id === page) ?? NAV[0];
 
@@ -168,6 +175,7 @@ export function Layout({ page, onNavigate, children }: { page: PageId; onNavigat
   const badgeFor = (id: PageId) => {
     if (id === 'planner') return todayTasks;
     if (id === 'revision') return revisionDue;
+    if (id === 'schedule') return scheduleDue;
     return 0;
   };
 
