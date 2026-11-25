@@ -79,10 +79,8 @@ export function SchedulePlanner() {
 
   // Identify today's scheduled portion
   const todayItem = useMemo(() => {
-    // 1. First look for today's date exact match
     const exact = days.find((d) => d.date === today);
     if (exact) return exact;
-    // 2. Or the first pending portion
     const firstPending = days.find((d) => !d.done);
     return firstPending || days[days.length - 1] || null;
   }, [days, today]);
@@ -163,7 +161,7 @@ export function SchedulePlanner() {
       repetitionCount: 0,
       lastReviewedAt: null,
       lastRating: null,
-      nextReviewDate: today, // due immediately for first review
+      nextReviewDate: today,
       notes: weakNotes.trim() || undefined,
       createdAt: new Date().toISOString(),
     };
@@ -189,7 +187,7 @@ export function SchedulePlanner() {
   };
 
   return (
-    <div>
+    <div className="space-y-4">
       <PageHeader
         icon="target"
         title="جدولة الحفظ والمراجعة"
@@ -211,89 +209,85 @@ export function SchedulePlanner() {
       {/* 1. TODAY VIEW (ورد اليوم)                                                */}
       {/* ========================================================================= */}
       {activeTab === 'today' && (
-        <div className="mt-4 flex flex-col gap-4">
-          {/* Progress Header Card */}
-          <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-surface via-surface to-primarysoft/15">
-            <CardBody className="py-4">
+        <div className="flex flex-col gap-4">
+          {/* Progress Overview Card (Flat background per Rule B4) */}
+          <Card className="border border-line bg-surface shadow-soft">
+            <CardBody className="p-4 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primarysoft text-primary">
-                      <Icon name="calendar" size={17} />
-                    </span>
-                    <div>
-                      <p className="text-xs text-muted">مرحلة الختمة الحالية</p>
-                      <h2 className="font-display text-lg font-bold">
-                        اليوم {fmtNum(currentDayIndex)} من {fmtNum(totalDays)}
-                      </h2>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primarysoft text-primary">
+                    <Icon name="calendar" size={20} />
+                  </span>
+                  <div>
+                    <p className="text-xs font-medium text-muted [text-wrap:balance]">
+                      مرحلة الختمة الحالية
+                    </p>
+                    <h2 className="font-display text-xl font-bold tracking-tight text-ink [text-wrap:balance]">
+                      اليوم {fmtNum(currentDayIndex)} من {fmtNum(totalDays)}
+                    </h2>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="text-start sm:text-end">
-                    <p className="text-xs text-muted">الإنجاز الإجمالي</p>
-                    <p className="font-display text-base font-bold text-primary">
-                      {fmtNum(progressPercent)}٪ ({fmtNum(completedDays)} من {fmtNum(totalDays)} يوم)
-                    </p>
-                  </div>
+                <div className="text-start sm:text-end">
+                  <p className="text-xs font-medium text-muted">الإنجاز الإجمالي</p>
+                  <p className="font-display text-lg font-bold text-primary">
+                    {fmtNum(progressPercent)}٪ ({fmtNum(completedDays)} من {fmtNum(totalDays)} يوم)
+                  </p>
                 </div>
               </div>
 
-              {/* Progress bar */}
-              <div className="mt-3.5 h-2.5 w-full overflow-hidden rounded-full bg-surface2">
+              {/* Progress Bar with smooth deceleration curve (Rule B7) */}
+              <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-surface2">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  className="h-full rounded-full bg-primary transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
                   style={{ width: `${Math.min(100, Math.max(3, progressPercent))}%` }}
                 />
               </div>
 
-              <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted [text-wrap:pretty]">
                 <span>المحفوظ: {resolveMemorizedPages(config.memorized).summary}</span>
-                <span>مدة الختمة: {fmtNum(config.targetDays)} أيام</span>
+                <span>المدة المستهدفة: {fmtNum(config.targetDays)} أيام</span>
               </div>
             </CardBody>
           </Card>
 
-          {/* Missed Days Banner (if any) */}
+          {/* Missed Days Notice (Rule B4 & B8: honest, calm, clear options) */}
           {missedInfo.hasMissed && (
-            <div className="flex flex-col gap-2 rounded-2xl border border-amber-300/80 bg-amber-50/80 p-4 text-amber-900 shadow-soft dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-200">
-              <div className="flex items-start gap-2.5">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-amber-200/80 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
-                  <Icon name="alert" size={15} />
+            <div className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950 shadow-soft dark:border-amber-700/80 dark:bg-amber-950/40 dark:text-amber-200">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200">
+                  <Icon name="alert" size={17} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold">
-                    تنبيه: لديك ورد غير مكتمل من أيام سابقة ({fmtNum(missedInfo.missedCount)} يوم)
-                  </p>
-                  <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
-                    لم يتم تفويت أي جزء من محفوظك! يمكنك الاختيار بين ترحيل الأيام الفائتة وتأجيل تاريخ الختام، أو إعادة توزيع المتبقي بزيادة المقدار اليومي:
+                  <h3 className="text-sm font-bold [text-wrap:balance]">
+                    تنبيه: ورد متأخر من أيام سابقة ({fmtNum(missedInfo.missedCount)} يوم)
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/90 [text-wrap:pretty]">
+                    لم يتم تفويت أي صفحة من محفوظك. يمكنك ترحيل الأيام الفائتة وتأجيل موعد الختام، أو إعادة توزيع الصفحات المتبقية على الأيام المتبقية:
                   </p>
                 </div>
               </div>
-              <div className="mt-2 flex flex-wrap gap-2 ps-8">
-                <Btn
-                  variant="outline"
-                  size="sm"
+              <div className="flex flex-wrap gap-2 ps-10">
+                <button
+                  type="button"
                   onClick={handleDelayEnd}
-                  className="bg-surface text-ink hover:border-amber-400"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-amber-400/80 bg-surface px-3 py-2 text-xs font-semibold text-ink shadow-soft transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-amber-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <Icon name="clock" size={13} className="me-1" /> تأجيل موعد الختام (ترحيل الأيام)
-                </Btn>
-                <Btn
-                  variant="outline"
-                  size="sm"
+                  <Icon name="clock" size={14} /> تأجيل موعد الختام وترحيل الأيام
+                </button>
+                <button
+                  type="button"
                   onClick={handleRecalculateDaily}
-                  className="bg-surface text-ink hover:border-amber-400"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-amber-400/80 bg-surface px-3 py-2 text-xs font-semibold text-ink shadow-soft transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-amber-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <Icon name="refresh" size={13} className="me-1" /> زيادة المقدار اليومي (إنهاء في الموعد)
-                </Btn>
+                  <Icon name="refresh" size={14} /> زيادة المقدار اليومي والإنهاء في الموعد
+                </button>
               </div>
             </div>
           )}
 
-          {/* Today's Khatma Portion */}
-          <Card>
+          {/* Today's Khatma Portion Card */}
+          <Card className="border border-line bg-surface shadow-soft">
             <CardHead
               title="ورد الختمة المقرّر اليوم"
               sub={todayItem ? fmtDateAr(todayItem.date) : 'اليوم'}
@@ -305,15 +299,15 @@ export function SchedulePlanner() {
                 )
               }
             />
-            <CardBody>
+            <CardBody className="p-4 sm:p-5">
               {todayItem ? (
                 <div className="flex flex-col gap-3">
                   <div
                     className={cx(
-                      'flex items-center gap-3.5 rounded-2xl border p-4 transition',
+                      'flex items-center gap-3.5 rounded-xl border p-4 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
                       todayItem.done
-                        ? 'border-emerald-300/70 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-950/20'
-                        : 'border-line bg-surface2/60',
+                        ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-800/60 dark:bg-emerald-950/30'
+                        : 'border-line bg-surface2/60 hover:border-primary/40',
                     )}
                   >
                     <input
@@ -321,26 +315,26 @@ export function SchedulePlanner() {
                       id={`check-${todayItem.id}`}
                       checked={todayItem.done}
                       onChange={() => handleToggleDay(todayItem.id)}
-                      className="h-6 w-6 shrink-0 cursor-pointer rounded-lg accent-[rgb(var(--c-primary))]"
+                      className="h-6 w-6 shrink-0 cursor-pointer rounded-md accent-[rgb(var(--c-primary))] focus-visible:ring-2 focus-visible:ring-primary"
                     />
                     <label htmlFor={`check-${todayItem.id}`} className="min-w-0 flex-1 cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <span className="font-display text-base font-bold leading-tight">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-display text-base font-bold text-ink">
                           {todayItem.title}
                         </span>
                         <span className="text-xs text-muted">
                           (اليوم {fmtNum(todayItem.dayIndex)} من {fmtNum(totalDays)})
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-muted leading-relaxed">
+                      <p className="mt-1 text-xs text-muted leading-relaxed [text-wrap:pretty]">
                         {todayItem.details}
                       </p>
                     </label>
                   </div>
 
                   {todayItem.done && (
-                    <div className="rounded-xl bg-emerald-100/60 p-3 text-center text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                      تقبّل الله طاعتك! تم إنجاز ورد الختمة المقرر لليوم بنجاح.
+                    <div className="rounded-xl border border-emerald-300/80 bg-emerald-100/50 p-3 text-center text-xs font-semibold text-emerald-900 dark:border-emerald-800/80 dark:bg-emerald-950/40 dark:text-emerald-200">
+                      تقبّل الله طاعتك. تم إنجاز ورد الختمة المقرر لليوم بنجاح.
                     </div>
                   )}
                 </div>
@@ -353,8 +347,8 @@ export function SchedulePlanner() {
             </CardBody>
           </Card>
 
-          {/* Weak Parts Due Today */}
-          <Card>
+          {/* Weak Parts Due Today Card */}
+          <Card className="border border-line bg-surface shadow-soft">
             <CardHead
               title="المواضع الضعيفة المستحقة للمراجعة اليوم"
               sub="تكرار متباعد لتثبيت المتشابهات والمواضع الصعبة"
@@ -364,67 +358,72 @@ export function SchedulePlanner() {
                 </span>
               }
             />
-            <CardBody>
+            <CardBody className="p-4 sm:p-5">
               {dueWeakParts.length === 0 ? (
                 <EmptyState
                   title="لا توجد مواضع مستحقة اليوم"
-                  sub="ممتاز! جميع المواضع الضعيفة مراجعة وفي مواعيدها. يمكنك إضافة مواضع جديدة من تبويب «المواضع الضعيفة»."
+                  sub="ممتاز. جميع المواضع الضعيفة مراجعة وفي مواعيدها. يمكنك إضافة مواضع جديدة من تبويب «المواضع الضعيفة»."
                 />
               ) : (
-                <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col gap-3">
                   {dueWeakParts.map((wp) => (
                     <div
                       key={wp.id}
-                      className="flex flex-col gap-2 rounded-2xl border border-line bg-surface2/50 p-3.5 transition"
+                      className="flex flex-col gap-3 rounded-xl border border-line bg-surface2/50 p-3.5 transition-all duration-200 hover:border-line/80"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold">{wp.title}</span>
+                          <span className="text-sm font-bold text-ink">{wp.title}</span>
                           <button
+                            type="button"
                             onClick={() => handleToggleStage(wp.id)}
-                            title="انقر لتبديل طريقة المراجعة (نظراً أو غيباً)"
+                            title="انقر للتبديل بين القراءة بالنظر أو المراجعة غيباً"
                             className={cx(
-                              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition',
+                              'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all duration-200 active:scale-[0.98]',
                               wp.stage === 'sight'
                                 ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
                                 : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
                             )}
                           >
-                            <Icon name={wp.stage === 'sight' ? 'eye' : 'book'} size={11} />
+                            <Icon name={wp.stage === 'sight' ? 'eye' : 'book'} size={12} />
                             {wp.stage === 'sight' ? 'بالنظر أولاً' : 'غيباً'}
                           </button>
                         </div>
-                        <span className="text-[11px] text-muted">
-                          تكرار #{fmtNum(wp.repetitionCount + 1)} • كل {fmtNum(wp.intervalDays)} يوم
+                        <span className="text-xs text-muted">
+                          تكرار رقم {fmtNum(wp.repetitionCount + 1)} • كل {fmtNum(wp.intervalDays)} يوم
                         </span>
                       </div>
 
                       {wp.notes && (
-                        <p className="text-xs text-muted/90 bg-surface/70 rounded-lg p-2">
+                        <p className="rounded-lg border border-line/60 bg-surface p-2 text-xs text-muted [text-wrap:pretty]">
                           {wp.notes}
                         </p>
                       )}
 
-                      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2">
-                        <span className="text-xs font-semibold text-muted">
+                      {/* Clean Rating Box (No single-sided border, rule B4) */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface/70 p-2.5">
+                        <span className="text-xs font-medium text-muted">
                           قيّم مراجعتك لجدولة الموعد القادم:
                         </span>
                         <div className="flex items-center gap-1.5">
                           <button
+                            type="button"
                             onClick={() => handleRateWeakPart(wp.id, 'hard')}
-                            className="rounded-lg bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700 hover:bg-red-200 transition dark:bg-red-950/60 dark:text-red-300"
+                            className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 transition-all duration-200 hover:bg-red-200 active:scale-[0.98] dark:bg-red-950/60 dark:text-red-300"
                           >
                             صعب (+1 يوم)
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleRateWeakPart(wp.id, 'ok')}
-                            className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700 hover:bg-amber-200 transition dark:bg-amber-950/60 dark:text-amber-300"
+                            className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-all duration-200 hover:bg-amber-200 active:scale-[0.98] dark:bg-amber-950/60 dark:text-amber-300"
                           >
                             مقبول (+{fmtNum(wp.intervalDays <= 1 ? 3 : wp.intervalDays <= 3 ? 7 : 14)} يوم)
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleRateWeakPart(wp.id, 'easy')}
-                            className="rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-200 transition dark:bg-emerald-950/60 dark:text-emerald-300"
+                            className="rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-all duration-200 hover:bg-emerald-200 active:scale-[0.98] dark:bg-emerald-950/60 dark:text-emerald-300"
                           >
                             سهل (+{fmtNum(wp.intervalDays <= 1 ? 7 : wp.intervalDays <= 3 ? 14 : 21)} يوم)
                           </button>
@@ -443,7 +442,7 @@ export function SchedulePlanner() {
       {/* 2. KHATMA PLAN TABLE (جدول الختمة)                                       */}
       {/* ========================================================================= */}
       {activeTab === 'khatma' && (
-        <Card className="mt-4">
+        <Card className="border border-line bg-surface shadow-soft">
           <CardHead
             title="جدول أيام الختمة الكامل"
             sub={`إجمالي ${fmtNum(days.length)} يوماً • مكتمل منها ${fmtNum(completedDays)} يوماً`}
@@ -453,7 +452,7 @@ export function SchedulePlanner() {
               </Btn>
             }
           />
-          <CardBody>
+          <CardBody className="p-4 sm:p-5">
             {days.length === 0 ? (
               <EmptyState
                 title="الجدول غير منشأ بعد"
@@ -468,40 +467,40 @@ export function SchedulePlanner() {
                     <div
                       key={d.id}
                       className={cx(
-                        'flex items-center gap-3 rounded-xl border px-3.5 py-2.5 transition',
+                        'flex items-center gap-3 rounded-xl border px-3.5 py-3 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
                         d.done
-                          ? 'border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/30 dark:bg-emerald-950/20'
+                          ? 'border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20'
                           : isToday
-                          ? 'border-primary/50 bg-primarysoft/20 shadow-soft'
+                          ? 'border-primary/60 bg-primarysoft/20 shadow-soft'
                           : isPast
-                          ? 'border-amber-200 bg-amber-50/30 dark:border-amber-900/30 dark:bg-amber-950/20'
-                          : 'border-line/70 bg-surface2/40',
+                          ? 'border-amber-200 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20'
+                          : 'border-line/70 bg-surface2/40 hover:border-line',
                       )}
                     >
                       <input
                         type="checkbox"
                         checked={d.done}
                         onChange={() => handleToggleDay(d.id)}
-                        className="h-5 w-5 shrink-0 cursor-pointer rounded accent-[rgb(var(--c-primary))]"
+                        className="h-5 w-5 shrink-0 cursor-pointer rounded-md accent-[rgb(var(--c-primary))] focus-visible:ring-2 focus-visible:ring-primary"
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-muted">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-semibold text-muted">
                             اليوم {fmtNum(d.dayIndex)}
                           </span>
-                          <span className="font-bold leading-tight">{d.title}</span>
+                          <span className="font-bold text-sm text-ink">{d.title}</span>
                           {isToday && (
-                            <span className="rounded-full bg-primary px-2 py-0.2 text-[10px] font-bold text-white">
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-white">
                               اليوم
                             </span>
                           )}
                           {isPast && !d.done && (
-                            <span className="rounded-full bg-amber-200 px-1.5 py-0.2 text-[10px] font-bold text-amber-900 dark:bg-amber-900 dark:text-amber-200">
+                            <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-950 dark:bg-amber-900 dark:text-amber-200">
                               فائت
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 text-xs text-muted">{d.details}</p>
+                        <p className="mt-0.5 text-xs text-muted [text-wrap:pretty]">{d.details}</p>
                       </div>
                       <span className="shrink-0 text-xs text-muted">
                         {fmtDateAr(d.date)}
@@ -519,17 +518,17 @@ export function SchedulePlanner() {
       {/* 3. WEAK PARTS & SPACED REPETITION (المواضع الضعيفة)                     */}
       {/* ========================================================================= */}
       {activeTab === 'weak' && (
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
           {/* Add Weak Part Card */}
-          <Card>
+          <Card className="border border-line bg-surface shadow-soft">
             <CardHead
               title="إضافة موضع ضعيف جديد"
               sub="حدد السورة أو الربع أو الجزء لتثبيته بنظام التكرار المتباعد"
             />
-            <CardBody>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <CardBody className="p-4 sm:p-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-muted">نوع الموضع</label>
+                  <label className="mb-1 block text-xs font-semibold text-muted">نوع الموضع</label>
                   <Select
                     value={weakType}
                     onChange={(e) => setWeakType(e.target.value as WeakPartType)}
@@ -543,7 +542,7 @@ export function SchedulePlanner() {
 
                 {weakType === 'surah' && (
                   <div>
-                    <label className="mb-1 block text-xs font-bold text-muted">اختر السورة</label>
+                    <label className="mb-1 block text-xs font-semibold text-muted">اختر السورة</label>
                     <Select
                       value={weakSurah}
                       onChange={(e) => setWeakSurah(Number(e.target.value))}
@@ -559,7 +558,7 @@ export function SchedulePlanner() {
 
                 {weakType === 'juz' && (
                   <div>
-                    <label className="mb-1 block text-xs font-bold text-muted">اختر الجزء</label>
+                    <label className="mb-1 block text-xs font-semibold text-muted">اختر الجزء</label>
                     <Select
                       value={weakJuz}
                       onChange={(e) => setWeakJuz(Number(e.target.value))}
@@ -576,7 +575,7 @@ export function SchedulePlanner() {
                 {weakType === 'rub' && (
                   <>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">الجزء</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">الجزء</label>
                       <Select
                         value={weakRubJuz}
                         onChange={(e) => setWeakRubJuz(Number(e.target.value))}
@@ -589,7 +588,7 @@ export function SchedulePlanner() {
                       </Select>
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">الربع</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">الربع</label>
                       <Select
                         value={weakRubIndex}
                         onChange={(e) => setWeakRubIndex(Number(e.target.value))}
@@ -606,9 +605,9 @@ export function SchedulePlanner() {
 
                 {weakType === 'custom' && (
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-xs font-bold text-muted">عنوان الموضع</label>
+                    <label className="mb-1 block text-xs font-semibold text-muted">عنوان الموضع</label>
                     <Input
-                      placeholder="مثال: أواخر سورة البقرة، أو قصة موسى في سورة طه..."
+                      placeholder="مثال: أواخر سورة البقرة، أو قصة موسى في سورة طه"
                       value={weakCustomTitle}
                       onChange={(e) => setWeakCustomTitle(e.target.value)}
                     />
@@ -616,7 +615,7 @@ export function SchedulePlanner() {
                 )}
 
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-muted">مرحلة المراجعة</label>
+                  <label className="mb-1 block text-xs font-semibold text-muted">مرحلة المراجعة</label>
                   <Select
                     value={weakStage}
                     onChange={(e) => setWeakStage(e.target.value as WeakPartStage)}
@@ -627,30 +626,30 @@ export function SchedulePlanner() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-bold text-muted">ملاحظات / سبب الصعوبة (اختياري)</label>
+                  <label className="mb-1 block text-xs font-semibold text-muted">ملاحظات / سبب الصعوبة (اختياري)</label>
                   <Input
-                    placeholder="مثال: تشابه الآية مع سورة الأعراف، أو ضبط أواخر الآيات..."
+                    placeholder="مثال: تشابه الآية مع سورة الأعراف، أو ضبط أواخر الآيات"
                     value={weakNotes}
                     onChange={(e) => setWeakNotes(e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="mt-3 flex justify-end">
+              <div className="mt-4 flex justify-end">
                 <Btn onClick={handleAddWeakPart}>
-                  <Icon name="plus" size={15} className="me-1" /> إضافة إلى جدول التكرار المتباعد
+                  <Icon name="plus" size={15} className="me-1.5" /> إضافة إلى جدول التكرار المتباعد
                 </Btn>
               </div>
             </CardBody>
           </Card>
 
           {/* List of Weak Parts */}
-          <Card>
+          <Card className="border border-line bg-surface shadow-soft">
             <CardHead
               title="جميع المواضع الضعيفة المسجلة"
               sub={`المجموع: ${fmtNum(weakParts.length)} موضع`}
             />
-            <CardBody>
+            <CardBody className="p-4 sm:p-5">
               {weakParts.length === 0 ? (
                 <EmptyState
                   title="لا توجد مواضع ضعيفة مسجلة"
@@ -664,61 +663,65 @@ export function SchedulePlanner() {
                       <div
                         key={wp.id}
                         className={cx(
-                          'flex flex-col gap-2 rounded-2xl border p-3.5 transition sm:flex-row sm:items-center sm:justify-between',
+                          'flex flex-col gap-3 rounded-xl border p-4 transition-all duration-200 sm:flex-row sm:items-center sm:justify-between',
                           isDue
-                            ? 'border-primary/40 bg-primarysoft/15'
-                            : 'border-line/70 bg-surface2/40',
+                            ? 'border-primary/50 bg-primarysoft/15'
+                            : 'border-line/70 bg-surface2/40 hover:border-line',
                         )}
                       >
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm">{wp.title}</span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-sm text-ink">{wp.title}</span>
                             <button
+                              type="button"
                               onClick={() => handleToggleStage(wp.id)}
                               className={cx(
-                                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition',
+                                'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-all duration-200 active:scale-[0.98]',
                                 wp.stage === 'sight'
                                   ? 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300'
                                   : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
                               )}
                             >
-                              <Icon name={wp.stage === 'sight' ? 'eye' : 'book'} size={11} />
+                              <Icon name={wp.stage === 'sight' ? 'eye' : 'book'} size={12} />
                               {wp.stage === 'sight' ? 'بالنظر' : 'غيباً'}
                             </button>
                             {isDue && (
-                              <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-white">
+                              <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-white">
                                 مستحق اليوم
                               </span>
                             )}
                           </div>
                           {wp.notes && (
-                            <p className="mt-1 text-xs text-muted">{wp.notes}</p>
+                            <p className="mt-1 text-xs text-muted [text-wrap:pretty]">{wp.notes}</p>
                           )}
-                          <p className="mt-1 text-[11px] text-muted">
+                          <p className="mt-1.5 text-xs text-muted">
                             الموعد القادم: {fmtDateAr(wp.nextReviewDate)} • الفاصل الحالي: {fmtNum(wp.intervalDays)} يوم • عدد التكرارات: {fmtNum(wp.repetitionCount)}
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-1.5 self-end sm:self-center">
+                        <div className="flex items-center gap-2 self-end sm:self-center">
                           <div className="flex items-center gap-1">
                             <button
+                              type="button"
                               onClick={() => handleRateWeakPart(wp.id, 'hard')}
                               title="تقييم: صعب (+1 يوم)"
-                              className="rounded-lg bg-red-100 px-2 py-1 text-xs font-bold text-red-700 hover:bg-red-200 dark:bg-red-950/60 dark:text-red-300"
+                              className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 transition-all duration-200 hover:bg-red-200 active:scale-[0.98] dark:bg-red-950/60 dark:text-red-300"
                             >
                               صعب
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleRateWeakPart(wp.id, 'ok')}
                               title="تقييم: مقبول"
-                              className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700 hover:bg-amber-200 dark:bg-amber-950/60 dark:text-amber-300"
+                              className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-all duration-200 hover:bg-amber-200 active:scale-[0.98] dark:bg-amber-950/60 dark:text-amber-300"
                             >
                               مقبول
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleRateWeakPart(wp.id, 'easy')}
                               title="تقييم: سهل"
-                              className="rounded-lg bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300"
+                              className="rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-all duration-200 hover:bg-emerald-200 active:scale-[0.98] dark:bg-emerald-950/60 dark:text-emerald-300"
                             >
                               سهل
                             </button>
@@ -726,8 +729,8 @@ export function SchedulePlanner() {
                           <IconButton
                             label="حذف الموضع"
                             name="trash"
-                            size={14}
-                            className="text-muted hover:text-red-600"
+                            size={15}
+                            className="text-muted hover:text-red-600 active:scale-[0.98]"
                             onClick={() => handleRemoveWeakPart(wp.id)}
                           />
                         </div>
@@ -745,16 +748,16 @@ export function SchedulePlanner() {
       {/* 4. CONFIG & MEMORIZED AMOUNT (المحفوظ والخطة)                             */}
       {/* ========================================================================= */}
       {activeTab === 'config' && (
-        <div className="mt-4 flex flex-col gap-4">
-          <Card>
+        <div className="flex flex-col gap-4">
+          <Card className="border border-line bg-surface shadow-soft">
             <CardHead
               title="تحديد المقدار المحفوظ"
               sub="حدد كم تحفظ من القرآن الكريم ليتم توزيعه على الختمة"
             />
-            <CardBody>
+            <CardBody className="p-4 sm:p-5">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-muted">طريقة تحديد المحفوظ</label>
+                  <label className="mb-1 block text-xs font-semibold text-muted">طريقة تحديد المحفوظ</label>
                   <Select
                     value={scopeType}
                     onChange={(e) => setScopeType(e.target.value as MemorizedScope['type'])}
@@ -768,7 +771,7 @@ export function SchedulePlanner() {
                 {scopeType === 'ajza' && (
                   <>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">عدد الأجزاء المحفوظة</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">عدد الأجزاء المحفوظة</label>
                       <Input
                         type="number"
                         min={1}
@@ -778,7 +781,7 @@ export function SchedulePlanner() {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">جهة المحفوظ</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">جهة المحفوظ</label>
                       <Select
                         value={ajzaStart}
                         onChange={(e) => setAjzaStart(e.target.value as MemorizedScope['ajzaStart'])}
@@ -791,7 +794,7 @@ export function SchedulePlanner() {
                     {ajzaStart === 'custom' && (
                       <div className="flex gap-2">
                         <div className="flex-1">
-                          <label className="mb-1 block text-xs font-bold text-muted">من الجزء</label>
+                          <label className="mb-1 block text-xs font-semibold text-muted">من الجزء</label>
                           <Input
                             type="number"
                             min={1}
@@ -801,7 +804,7 @@ export function SchedulePlanner() {
                           />
                         </div>
                         <div className="flex-1">
-                          <label className="mb-1 block text-xs font-bold text-muted">إلى الجزء</label>
+                          <label className="mb-1 block text-xs font-semibold text-muted">إلى الجزء</label>
                           <Input
                             type="number"
                             min={1}
@@ -818,7 +821,7 @@ export function SchedulePlanner() {
                 {scopeType === 'surahs' && (
                   <>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">من سورة</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">من سورة</label>
                       <Select
                         value={fromSurah}
                         onChange={(e) => setFromSurah(Number(e.target.value))}
@@ -831,7 +834,7 @@ export function SchedulePlanner() {
                       </Select>
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">إلى سورة</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">إلى سورة</label>
                       <Select
                         value={toSurah}
                         onChange={(e) => setToSurah(Number(e.target.value))}
@@ -849,7 +852,7 @@ export function SchedulePlanner() {
                 {scopeType === 'pages' && (
                   <>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">من صفحة</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">من صفحة</label>
                       <Input
                         type="number"
                         min={1}
@@ -859,7 +862,7 @@ export function SchedulePlanner() {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-bold text-muted">إلى صفحة</label>
+                      <label className="mb-1 block text-xs font-semibold text-muted">إلى صفحة</label>
                       <Input
                         type="number"
                         min={1}
@@ -874,15 +877,15 @@ export function SchedulePlanner() {
             </CardBody>
           </Card>
 
-          <Card>
+          <Card className="border border-line bg-surface shadow-soft">
             <CardHead
               title="مدة الختمة وسياسة الأيام الفائتة"
               sub="كم يوماً تريد لإنهاء مراجعة هذا المقدار بالكامل؟"
             />
-            <CardBody>
+            <CardBody className="p-4 sm:p-5">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-muted">
+                  <label className="mb-1 block text-xs font-semibold text-muted">
                     عدد أيام الختمة (مثلاً ٧ أيام)
                   </label>
                   <Input
@@ -892,16 +895,16 @@ export function SchedulePlanner() {
                     value={targetDays}
                     onChange={(e) => setTargetDays(Math.max(1, Number(e.target.value)))}
                   />
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {[3, 5, 7, 10, 15, 30].map((d) => (
                       <button
                         key={d}
                         type="button"
                         onClick={() => setTargetDays(d)}
                         className={cx(
-                          'rounded-lg px-2.5 py-1 text-xs font-semibold transition',
+                          'rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-[0.98]',
                           targetDays === d
-                            ? 'bg-primary text-white'
+                            ? 'bg-primary text-white shadow-soft'
                             : 'bg-surface2 text-muted hover:text-ink',
                         )}
                       >
@@ -912,7 +915,7 @@ export function SchedulePlanner() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-bold text-muted">
+                  <label className="mb-1 block text-xs font-semibold text-muted">
                     السياسة الافتراضية عند تفويت يوم
                   </label>
                   <Select
@@ -922,16 +925,16 @@ export function SchedulePlanner() {
                     <option value="delayEnd">تأجيل موعد الختام (الحفاظ على المقدار اليومي ثابتاً)</option>
                     <option value="recalculateDaily">زيادة المقدار اليومي (إنهاء الختمة في موعدها الأصلي)</option>
                   </Select>
-                  <p className="mt-1 text-[11px] text-muted">
+                  <p className="mt-1 text-xs text-muted [text-wrap:pretty]">
                     في كلتا الحالتين، لا يتم تخطي أي جزء ويُعرض عليك الخياران دائماً عند حدوث تأخير.
                   </p>
                 </div>
               </div>
 
               {/* Summary and Recalculate Preview */}
-              <div className="mt-4 rounded-2xl border border-line bg-surface2/60 p-4">
+              <div className="mt-4 rounded-xl border border-line bg-surface2/60 p-4">
                 <p className="text-xs font-bold text-muted">معاينة الحساب:</p>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                <div className="mt-2 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
                   <div>
                     <span className="text-muted">المقدار المحفوظ:</span>
                     <p className="font-bold text-ink">{previewInfo.summary}</p>
@@ -949,7 +952,7 @@ export function SchedulePlanner() {
                 </div>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-5 flex justify-end">
                 <Btn onClick={handleSavePlan} size="lg">
                   <Icon name="check" size={16} className="me-1.5" /> حفظ الخطة والبدء من اليوم
                 </Btn>

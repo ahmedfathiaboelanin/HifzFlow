@@ -99,7 +99,7 @@ function describePageRange(startPage: number, endPage: number, pageCount: number
   if (startJuz === endJuz) {
     title = `الجزء ${fmtNum(startJuz)}`;
   } else {
-    title = `الأجزاء ${fmtNum(startJuz)} – ${fmtNum(endJuz)}`;
+    title = `الأجزاء من ${fmtNum(startJuz)} إلى ${fmtNum(endJuz)}`;
   }
 
   // Identify surah names covered
