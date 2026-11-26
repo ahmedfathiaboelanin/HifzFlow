@@ -17,11 +17,16 @@ const addSchema = z.object({
   surah: z.number().int().min(1).max(114),
   fromAyah: z.number().int().min(1),
   toAyah: z.number().int().min(1),
-  status: z.enum(['learning', 'memorized', 'mastered']),
-  strength: z.enum(['weak', 'medium', 'strong', 'veryStrong']),
+  strength: z.enum(['weak', 'medium', 'strong']),
 });
 
 type AddForm = z.infer<typeof addSchema>;
+
+const THREE_STRENGTHS: Array<{ value: Strength; label: string }> = [
+  { value: 'weak', label: 'ضعيف' },
+  { value: 'medium', label: 'متوسط' },
+  { value: 'strong', label: 'قوي' },
+];
 
 export function Memorization() {
   const [tab, setTab] = useState<'table' | 'add' | 'guide'>('table');
@@ -36,7 +41,7 @@ export function Memorization() {
 
   // ---- Add form (React Hook Form + Zod, validated on submit) ----
   const { register, handleSubmit, watch, setError, formState: { errors }, reset } = useForm<AddForm>({
-    defaultValues: { surah: 2, fromAyah: 1, toAyah: 5, status: 'memorized', strength: 'weak' },
+    defaultValues: { surah: 2, fromAyah: 1, toAyah: 5, strength: 'weak' },
   });
   const watchSurah = watch('surah');
   const [addedMsg, setAddedMsg] = useState('');
@@ -64,7 +69,7 @@ export function Memorization() {
       surah: data.surah,
       fromAyah: data.fromAyah,
       toAyah: data.toAyah,
-      status: data.status,
+      status: 'memorized',
       strength: data.strength,
       srStage: 0,
       srDue: firstDue(data.strength),
@@ -133,7 +138,7 @@ export function Memorization() {
 
       {tab === 'table' && (
         <Card className="mt-3">
-          <CardHead title="السور المحفوظة" sub="غيّر الحالة أو القوة من القائمة — تغيير القوة يعيد جدولة المراجعة من المرحلة الأولى" />
+          <CardHead title="السور المحفوظة" sub="حدّد مستوى القوة (ضعيف، متوسط، قوي) — تغيير القوة يعيد جدولة المراجعة" />
           {pageItems.length === 0 ? (
             <EmptyState title="لا يوجد محفوظ بعد" sub="أضف أول نطاق من تبويب «إضافة ونطاق»." />
           ) : (
@@ -143,7 +148,6 @@ export function Memorization() {
                   <tr className="border-b border-line text-start text-xs text-muted">
                     <th className="px-3 py-2 text-start">السورة</th>
                     <th className="px-3 py-2 text-start">الآيات</th>
-                    <th className="px-3 py-2 text-start">الحالة</th>
                     <th className="px-3 py-2 text-start">القوة</th>
                     <th className="px-3 py-2 text-start">المراجعة القادمة</th>
                     <th className="px-3 py-2 text-start">المرحلة</th>
@@ -151,32 +155,30 @@ export function Memorization() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pageItems.map((e) => (
-                    <tr key={e.id} className="border-b border-line last:border-0">
-                      <td className="px-3 py-2 font-bold">{surahName(e.surah)}</td>
-                      <td className="px-3 py-2">{fmtNum(e.fromAyah)}–{fmtNum(e.toAyah)} ({fmtNum(entryAyahCount(e))} آية)</td>
-                      <td className="px-3 py-2">
-                        <Select value={e.status} onChange={(ev) => dispatch(progressSlice.actions.updateEntry({ id: e.id, patch: { status: ev.target.value as MemStatus } }))}>
-                          {(Object.keys(STATUS_LABEL) as MemStatus[]).map((s) => (<option key={s} value={s}>{STATUS_LABEL[s]}</option>))}
-                        </Select>
-                      </td>
-                      <td className="px-3 py-2">
-                        <Select value={e.strength} onChange={(ev) => changeStrength(e.id, ev.target.value as Strength)}>
-                          {(Object.keys(STRENGTH_LABEL) as Strength[]).map((s) => (<option key={s} value={s}>{STRENGTH_LABEL[s]}</option>))}
-                        </Select>
-                      </td>
-                      <td className="px-3 py-2">{fmtDateAr(e.srDue)}</td>
-                      <td className="px-3 py-2">{fmtNum(e.srStage + 1)} / {fmtNum(INTERVALS[e.strength].length)}</td>
-                      <td className="px-3 py-2">
-                        <button
-                          className="text-red-600 hover:underline"
-                          onClick={() => { if (window.confirm('حذف هذا النطاق من المحفوظ؟')) dispatch(progressSlice.actions.removeEntry(e.id)); }}
-                        >
-                          حذف
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {pageItems.map((e) => {
+                    const currentStrength: Strength = e.strength === 'veryStrong' ? 'strong' : e.strength;
+                    return (
+                      <tr key={e.id} className="border-b border-line last:border-0">
+                        <td className="px-3 py-2 font-bold">{surahName(e.surah)}</td>
+                        <td className="px-3 py-2">{fmtNum(e.fromAyah)}–{fmtNum(e.toAyah)} ({fmtNum(entryAyahCount(e))} آية)</td>
+                        <td className="px-3 py-2">
+                          <Select value={currentStrength} onChange={(ev) => changeStrength(e.id, ev.target.value as Strength)}>
+                            {THREE_STRENGTHS.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
+                          </Select>
+                        </td>
+                        <td className="px-3 py-2">{fmtDateAr(e.srDue)}</td>
+                        <td className="px-3 py-2">{fmtNum(e.srStage + 1)} / {fmtNum(INTERVALS[e.strength]?.length ?? 1)}</td>
+                        <td className="px-3 py-2">
+                          <button
+                            className="text-red-600 hover:underline"
+                            onClick={() => { if (window.confirm('حذف هذا النطاق من المحفوظ؟')) dispatch(progressSlice.actions.removeEntry(e.id)); }}
+                          >
+                            حذف
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -191,7 +193,7 @@ export function Memorization() {
             <CardHead title="إضافة نطاق محفوظ" sub="سورة واحدة أو جزء منها" />
             <CardBody>
               <form onSubmit={handleSubmit(onAdd)} className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
                   <label className="text-sm">السورة
                     <Select {...register('surah', { valueAsNumber: true })} className="mt-1 w-full">
                       {SURAHS.map((s) => (<option key={s.number} value={s.number}>{s.name} ({fmtNum(s.ayahs)})</option>))}
@@ -203,17 +205,12 @@ export function Memorization() {
                   <label className="text-sm">إلى آية
                     <Input type="number" min={1} max={surahAyahCount(watchSurah)} {...register('toAyah', { valueAsNumber: true })} className="mt-1" />
                   </label>
-                  <label className="text-sm">الحالة
-                    <Select {...register('status')} className="mt-1 w-full">
-                      {(Object.keys(STATUS_LABEL) as MemStatus[]).map((s) => (<option key={s} value={s}>{STATUS_LABEL[s]}</option>))}
+                  <label className="text-sm">القوة
+                    <Select {...register('strength')} className="mt-1 w-full">
+                      {THREE_STRENGTHS.map((s) => (<option key={s.value} value={s.value}>{s.label}</option>))}
                     </Select>
                   </label>
                 </div>
-                <label className="text-sm">القوة
-                  <Select {...register('strength')} className="mt-1 w-full sm:w-64">
-                    {(Object.keys(STRENGTH_LABEL) as Strength[]).map((s) => (<option key={s} value={s}>{STRENGTH_LABEL[s]}</option>))}
-                  </Select>
-                </label>
                 {Object.entries(errors).map(([k, e]) => (
                   <p key={k} className="text-sm text-red-600">{(e as { message?: string }).message ?? 'خطأ في الإدخال'}</p>
                 ))}
@@ -276,15 +273,22 @@ export function Memorization() {
                 </tr>
               </thead>
               <tbody>
-                {(Object.keys(INTERVALS) as Strength[]).map((s) => (
-                  <tr key={s} className="border-b border-line last:border-0">
-                    <td className="px-2 py-2 font-bold">{STRENGTH_LABEL[s]}</td>
-                    <td className="px-2 py-2">{INTERVALS[s].map(fmtNum).join(' ، ')}</td>
-                    <td className="px-2 py-2 text-muted">
-                      {s === 'weak' ? '٦ مراحل — لا يترقى لمتوسط إلا بإكمالها كلها بتقييم جيد/سهل. «سهل» مرتين لا يكفي للضعيف، و«أعد» يعيد الدورة من الأول.' : s === 'medium' ? 'بعد التثبيت تُراجع مع المتوسط كل ١٥ يوم (أو ١٠ أيام حسب اختيارك).' : '«سهل» مرتين متتاليتين يرفع القوة درجة.'}
-                    </td>
-                  </tr>
-                ))}
+                {THREE_STRENGTHS.map((st) => {
+                  const s = st.value;
+                  return (
+                    <tr key={s} className="border-b border-line last:border-0">
+                      <td className="px-2 py-2 font-bold">{st.label}</td>
+                      <td className="px-2 py-2">{INTERVALS[s].map(fmtNum).join(' ، ')}</td>
+                      <td className="px-2 py-2 text-muted">
+                        {s === 'weak'
+                          ? 'مراحل تثبيت متدرجة — تكرار متباعد لحين إتقان السورة وترقيتها إلى متوسط.'
+                          : s === 'medium'
+                          ? 'مستوى متوسط — مراجعة دورية لتثبيت الحفظ ونقله لمستوى قوي.'
+                          : 'مستوى متقن — مراجعة متباعدة للحفاظ على جودة الإتقان.'}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             <p className="mt-3 text-sm leading-relaxed">

@@ -70,6 +70,11 @@ export function resolveMemorizedPages(scope: MemorizedScope): {
     const s1 = SURAHS[fromS - 1]?.name ?? `سورة ${fromS}`;
     const s2 = SURAHS[toS - 1]?.name ?? `سورة ${toS}`;
     summary = `من ${s1} إلى ${s2}`;
+  } else if (scope.type === 'manual') {
+    const count = Math.max(1, scope.manualPageCount || 10);
+    pages = Array.from({ length: count }, (_, i) => i + 1);
+    const countStr = count === 1 ? 'صفحة واحدة' : count === 2 ? 'صفحتان' : `${fmtNum(count)} صفحات`;
+    summary = `${countStr} (إدخال مباشر)`;
   } else {
     // By pages
     const fromP = Math.max(1, Math.min(scope.fromPage || 1, scope.toPage || 604));
@@ -321,3 +326,84 @@ export const RUB_OPTIONS = [
   'الربع السابع',
   'الربع الثامن',
 ];
+
+/**
+ * Generates schedule days from an explicit list of page numbers (e.g. from ProgressEntry[] or manual count).
+ */
+export function generateScheduleFromPageList(
+  pages: number[],
+  targetDays: number,
+  startDate: string = todayStr(),
+): ScheduleDayItem[] {
+  const total = pages.length;
+  if (total === 0) return [];
+  const daysCount = Math.max(1, targetDays);
+  const items: ScheduleDayItem[] = [];
+
+  const basePages = Math.floor(total / daysCount);
+  const remainder = total % daysCount;
+
+  let offset = 0;
+  for (let i = 0; i < daysCount; i++) {
+    const countForDay = basePages + (i < remainder ? 1 : 0);
+    if (countForDay <= 0) continue;
+
+    const slice = pages.slice(offset, offset + countForDay);
+    offset += countForDay;
+
+    const startPage = slice[0];
+    const endPage = slice[slice.length - 1];
+    const { title, details } = describePageRange(startPage, endPage, countForDay);
+
+    items.push({
+      id: uid(),
+      dayIndex: i + 1,
+      date: addDaysStr(startDate, i),
+      title,
+      details,
+      startPage,
+      endPage,
+      pageCount: countForDay,
+      done: false,
+      doneAt: null,
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Staggers unstarted or new weak parts across consecutive days
+ * so the user is never faced with multiple new weak surahs on the same day.
+ */
+export function staggerWeakParts(
+  parts: WeakPartItem[],
+  today: string = todayStr(),
+  dailyQuota = 1,
+): WeakPartItem[] {
+  const reviewed = parts.filter((p) => p.repetitionCount > 0);
+  const unstarted = parts.filter((p) => p.repetitionCount === 0);
+
+  const dueCounts = new Map<string, number>();
+  for (const r of reviewed) {
+    dueCounts.set(r.nextReviewDate, (dueCounts.get(r.nextReviewDate) ?? 0) + 1);
+  }
+
+  let dayOffset = 0;
+  const updatedUnstarted = unstarted.map((item) => {
+    let candidateDate = addDaysStr(today, dayOffset);
+    while ((dueCounts.get(candidateDate) ?? 0) >= dailyQuota) {
+      dayOffset += 1;
+      candidateDate = addDaysStr(today, dayOffset);
+    }
+    dueCounts.set(candidateDate, (dueCounts.get(candidateDate) ?? 0) + 1);
+    dayOffset += 1;
+    return {
+      ...item,
+      nextReviewDate: candidateDate,
+    };
+  });
+
+  return [...reviewed, ...updatedUnstarted];
+}
+

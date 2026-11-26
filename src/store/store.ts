@@ -128,6 +128,7 @@ export async function hydrate(): Promise<void> {
   const schedConfigs = await db.scheduleConfig.toArray();
   const loadedConfig = schedConfigs[0] ?? defaultScheduleConfig;
   let loadedDays = await db.scheduleDays.toArray();
+  loadedDays.sort((a, b) => a.dayIndex - b.dayIndex);
   if (loadedDays.length === 0) {
     loadedDays = generateScheduleDays(loadedConfig.memorized, loadedConfig.targetDays, todayStr());
   }
@@ -267,6 +268,72 @@ export function generateRecurringToday(): void {
     }
   }
   if (toAdd.length > 0) appStore.dispatch(tasksSlice.actions.addDailyMany(toAdd));
+}
+
+/**
+ * Automatically synchronizes due items from the Revision section
+ * (khatma plan + weak parts fixation) into Daily Tasks (مهام يومية).
+ */
+export function syncScheduleTasks(): void {
+  const state = appStore.getState() as AppState;
+  const today = todayStr();
+  const days = state.schedule.days;
+  const weakParts = state.schedule.weakParts;
+  const dailyTasks = state.tasks.daily;
+
+  const existingMap = new Map<string, typeof dailyTasks[0]>();
+  for (const t of dailyTasks) {
+    if (t.refId) existingMap.set(t.refId, t);
+  }
+
+  const toAdd: typeof dailyTasks = [];
+
+  // 1. Khatma plan portion due today
+  if (days.length > 0) {
+    const todayItem = days.find((d) => d.date === today) || days.find((d) => !d.done);
+    if (todayItem) {
+      const refId = `khatma-${todayItem.id}`;
+      const existing = existingMap.get(refId);
+      if (!existing) {
+        toAdd.push({
+          id: uid(),
+          date: today,
+          title: `ورد مراجعة المحفوظ: ${todayItem.title} (${todayItem.details})`,
+          done: todayItem.done,
+          priority: 2,
+          linkedSurah: null,
+          kind: 'revision',
+          refId,
+        });
+      } else if (existing.done !== todayItem.done) {
+        appStore.dispatch(tasksSlice.actions.setDailyDone({ id: existing.id, done: todayItem.done }));
+      }
+    }
+  }
+
+  // 2. Weak parts due today for fixation
+  for (const wp of weakParts) {
+    if (wp.nextReviewDate <= today) {
+      const refId = `weak-${wp.id}-${wp.nextReviewDate}`;
+      const existing = existingMap.get(refId);
+      if (!existing) {
+        toAdd.push({
+          id: uid(),
+          date: today,
+          title: `تثبيت جزء ضعيف: ${wp.title} (${wp.stage === 'sight' ? 'بالنظر' : 'غيباً'})`,
+          done: false,
+          priority: 3,
+          linkedSurah: wp.surahNumber ?? null,
+          kind: 'fixation',
+          refId,
+        });
+      }
+    }
+  }
+
+  if (toAdd.length > 0) {
+    appStore.dispatch(tasksSlice.actions.addDailyMany(toAdd));
+  }
 }
 
 /** Replace all state from a validated backup file. */

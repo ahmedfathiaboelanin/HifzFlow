@@ -168,10 +168,11 @@ export const MISTAKE_LABEL: Record<Mistake['type'], string> = {
 export const STRENGTH_ORDER: Strength[] = ['weak', 'medium', 'strong', 'veryStrong'];
 
 // ---- Schedule Planner (جدولة الحفظ والمراجعة) ---------------------------------
-export type MemorizedScopeType = 'ajza' | 'surahs' | 'pages';
+export type MemorizedScopeType = 'ajza' | 'surahs' | 'pages' | 'manual' | 'progress';
 
 export interface MemorizedScope {
   type: MemorizedScopeType;
+  manualPageCount?: number; // e.g. 10
   ajzaCount: number; // e.g. 10
   ajzaStart: 'start' | 'end' | 'custom';
   customFromJuz?: number;

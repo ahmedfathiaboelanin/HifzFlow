@@ -20,7 +20,6 @@ export type PageId =
 export const NAV: Array<{ id: PageId; label: string; icon: IconName; group: string }> = [
   { id: 'dashboard', label: 'لوحة التحكم', icon: 'home', group: 'اليوم' },
   { id: 'revision', label: 'المراجعة', icon: 'repeat', group: 'اليوم' },
-  { id: 'schedule', label: 'جدولة الحفظ والمراجعة', icon: 'target', group: 'اليوم' },
   { id: 'planner', label: 'المهام', icon: 'calendar', group: 'اليوم' },
   { id: 'reader', label: 'المصحف', icon: 'book', group: 'الدراسة' },
   { id: 'memorization', label: 'الحفظ', icon: 'layers', group: 'الدراسة' },
@@ -32,9 +31,10 @@ export const NAV: Array<{ id: PageId; label: string; icon: IconName; group: stri
   { id: 'howto', label: 'طريقة الاستخدام', icon: 'help', group: 'بياناتك' },
 ];
 
-export const PAGE_TITLE: Record<PageId, string> = Object.fromEntries(
-  NAV.map((n) => [n.id, n.label]),
-) as Record<PageId, string>;
+export const PAGE_TITLE: Record<PageId, string> = {
+  ...Object.fromEntries(NAV.map((n) => [n.id, n.label])),
+  schedule: 'المراجعة',
+} as Record<PageId, string>;
 
 const GROUPS = ['اليوم', 'الدراسة', 'التقدّم', 'بياناتك'];
 

@@ -1,8 +1,8 @@
 // Daily + recurring task planner (grouped by date, Done buttons).
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/store';
-import { generateRecurringToday } from '../store/store';
-import { tasksSlice } from '../store/slices';
+import { generateRecurringToday, syncScheduleTasks } from '../store/store';
+import { scheduleSlice, tasksSlice } from '../store/slices';
 import { fmtDateAr, fmtNum, todayStr, uid } from '../lib/utils';
 import { hapticTap } from '../lib/pwa';
 import { Btn, Card, CardBody, CardHead, EmptyState, IconButton, Input, PageHeader, Select, Tabs } from '../components/ui';
@@ -63,6 +63,10 @@ export function Planner() {
   const [recDays, setRecDays] = useState<number[]>([5]);
   const [groupPage, setGroupPage] = useState(1);
 
+  useEffect(() => {
+    syncScheduleTasks();
+  }, []);
+
   const todayList = useMemo(
     () => daily.filter((t) => t.date <= today).sort((a, b) => (b.priority - a.priority) || a.date.localeCompare(b.date)),
     [daily, today],
@@ -96,7 +100,14 @@ export function Planner() {
     setRecTitle('');
   };
 
-  const toggleTask = (id: string) => dispatch(tasksSlice.actions.toggleDaily(id));
+  const toggleTask = (id: string) => {
+    const task = daily.find((t) => t.id === id);
+    if (task && task.refId?.startsWith('khatma-')) {
+      const dayId = task.refId.replace(/^khatma-/, '');
+      dispatch(scheduleSlice.actions.setDayDone({ id: dayId, done: !task.done }));
+    }
+    dispatch(tasksSlice.actions.toggleDaily(id));
+  };
   const removeTask = (id: string) => dispatch(tasksSlice.actions.removeDaily(id));
 
   return (
@@ -118,7 +129,21 @@ export function Planner() {
 
       {tab === 'today' && (
         <Card className="mt-3">
-          <CardHead title="مهام اليوم والمتأخرة" sub="علّم ما أنجزته" action={<Btn variant="outline" onClick={() => generateRecurringToday()}>توليد مهام اليوم المتكررة</Btn>} />
+          <CardHead
+            title="مهام اليوم والمتأخرة"
+            sub="علّم ما أنجزته"
+            action={
+              <Btn
+                variant="outline"
+                onClick={() => {
+                  generateRecurringToday();
+                  syncScheduleTasks();
+                }}
+              >
+                تحديث مهام اليوم
+              </Btn>
+            }
+          />
           <CardBody>
             <div className="mb-3 flex flex-wrap items-end gap-2">
               <Input placeholder="مهمة جديدة…" value={title} onChange={(e) => setTitle(e.target.value)} className="!w-64" onKeyDown={(e) => { if (e.key === 'Enter') addTask(); }} />

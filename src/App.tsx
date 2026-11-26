@@ -4,7 +4,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { registerSW } from 'virtual:pwa-register';
 import { useAppSelector } from './store/store';
-import { generateRecurringToday, hydrate } from './store/store';
+import { generateRecurringToday, hydrate, syncScheduleTasks } from './store/store';
 import { resolveMode } from './lib/themes';
 import { syncThemeColor, updateAppBadge } from './lib/pwa';
 import { loadQuranData } from './lib/quran';
@@ -26,9 +26,8 @@ const Analytics = lazy(() => import('./pages/Analytics').then((m) => ({ default:
 const Planner = lazy(() => import('./pages/Planner').then((m) => ({ default: m.Planner })));
 const BackupPage = lazy(() => import('./pages/BackupPage').then((m) => ({ default: m.BackupPage })));
 const HowTo = lazy(() => import('./pages/HowTo').then((m) => ({ default: m.HowTo })));
-const SchedulePlanner = lazy(() => import('./pages/SchedulePlanner').then((m) => ({ default: m.SchedulePlanner })));
 
-const VALID_PAGES = new Set<string>(NAV.map((n) => n.id));
+const VALID_PAGES = new Set<string>([...NAV.map((n) => n.id), 'schedule']);
 
 function pageFromHash(): PageId {
   const raw = window.location.hash.replace(/^#\/?/, '');
@@ -81,6 +80,7 @@ export default function App() {
       .then(() => {
         if (!live) return;
         generateRecurringToday();
+        syncScheduleTasks();
         setReady(true);
       });
     return () => {
@@ -182,7 +182,7 @@ export default function App() {
             {page === 'mutashabihat' && <Mutashabihat />}
             {page === 'analytics' && <Analytics />}
             {page === 'planner' && <Planner />}
-            {page === 'schedule' && <SchedulePlanner />}
+            {page === 'schedule' && <Revision />}
             {page === 'backup' && <BackupPage />}
             {page === 'howto' && <HowTo />}
           </Suspense>

@@ -217,14 +217,14 @@ export const scheduleSlice = createSlice({
       }>,
     ) => {
       if (action.payload.config) state.config = action.payload.config;
-      if (action.payload.days) state.days = action.payload.days;
+      if (action.payload.days) state.days = [...action.payload.days].sort((a, b) => a.dayIndex - b.dayIndex);
       if (action.payload.weakParts) state.weakParts = action.payload.weakParts;
     },
     updateConfig: (state, action: PayloadAction<Partial<ScheduleConfig>>) => {
       state.config = { ...state.config, ...action.payload, updatedAt: new Date().toISOString() };
     },
     setDays: (state, action: PayloadAction<ScheduleDayItem[]>) => {
-      state.days = action.payload;
+      state.days = [...action.payload].sort((a, b) => a.dayIndex - b.dayIndex);
     },
     toggleDayDone: (state, action: PayloadAction<string>) => {
       const d = state.days.find((x) => x.id === action.payload);
@@ -249,6 +249,9 @@ export const scheduleSlice = createSlice({
     },
     removeWeakPart: (state, action: PayloadAction<string>) => {
       state.weakParts = state.weakParts.filter((x) => x.id !== action.payload);
+    },
+    setWeakParts: (state, action: PayloadAction<WeakPartItem[]>) => {
+      state.weakParts = action.payload;
     },
     rateWeakPart: (state, action: PayloadAction<{ id: string; rating: WeakRating }>) => {
       const wp = state.weakParts.find((x) => x.id === action.payload.id);
